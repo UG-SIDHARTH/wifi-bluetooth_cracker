@@ -173,8 +173,8 @@ y = drawTable(
 
 y += 15;
 
-// Section 5: Display (2.4" TFT LCD Shield - 8-Bit Parallel)
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. 2.4" TFT LCD Shield (8-Bit Parallel Bus)', 40, y);
+// Section 5: Display (MCUFRIEND 2.4" TFT LCD Shield - 8-Bit Parallel)
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. MCUFRIEND 2.4" TFT LCD Shield (www.mcufriend.com)', 40, y);
 y += 18;
 
 y = drawTable(

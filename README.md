@@ -1,8 +1,8 @@
-# ESP32 Bluetooth & Wi-Fi Security, Scanning & Cracking Suite
+# ESP32 BT Jammer & Wi-Fi Security Suite — Complete Project & Build Guide
 
-A multi-tool security research device powered by an ESP32, 2x NRF24L01 transceivers, and an ILI9341 2.8" SPI Touchscreen display.
+A complete, multi-tool security research and penetration testing device powered by an **ESP32**, **MCUFRIEND 2.4" TFT LCD Shield (8-bit Parallel)**, and **2x NRF24L01 Transceiver Modules**.
 
-Features full support for **Bluetooth RF Jamming (BLE & Classic)**, **Wi-Fi Access Point & Client Scanning**, **EAPOL 4-Way Handshake & PMKID Promiscuous Sniffing**, **Deauthentication Attack Auditing**, **Embedded Password Dictionary Engine**, **Hashcat Mode 22000 Exporter**, and a **Web Control Dashboard**.
+Features a **3D Wireframe Boot Animation**, **Touchscreen Landscape UI**, **Wi-Fi Scanner & Promiscuous Sniffer**, **Deauth Audit Injector**, **MicroSD Wordlist Passphrase Engine**, **Hashcat 22000 Exporter**, and a **Web Control Dashboard**.
 
 ---
 
@@ -13,91 +13,96 @@ DO NOT use signal jamming, packet injection, or network auditing on public, emer
 
 ---
 
-## 🚀 System Features Matrix
+## 📋 Bill of Materials (Required Parts)
 
-| Feature | Protocol / Chip | Details |
+- **ESP32 30-Pin Development Board** (NodeMCU-32S / ESP32-WROOM-32)
+- **MCUFRIEND 2.4" TFT LCD Shield for Arduino UNO** (8-Bit Parallel Bus, red PCB)
+- **2x NRF24L01 2.4GHz RF Transceiver Modules** (Black PCB version with built-in meander trace antenna)
+- **1x MicroSD Card** (Formatted FAT32, optional for wordlist loading)
+- **2x Tactile Pushbuttons** (Optional for physical ON/OFF control)
+- **Breadboard & Jumper Wires** (Female-to-Male and Male-to-Male)
+- **5V USB Power Source** (5V 1A–2A Power Bank or USB adapter)
+
+---
+
+## 🔌 STEP 1: Hardware Wiring Instructions
+
+Connect the modules according to the pinout below:
+
+### A. MCUFRIEND 2.4" TFT LCD Shield to ESP32
+| Display Pin | ESP32 Pin | Function |
 | :--- | :--- | :--- |
-| **BLE Signal Jammer** | 2x NRF24L01 | Jams BLE advertising channels (2402MHz, 2426MHz, 2480MHz). |
-| **BT Classic Jammer** | 2x NRF24L01 | High-speed hopping across all 79 Bluetooth Classic channels (2402–2480 MHz). |
-| **Wi-Fi AP & Client Scanner** | Built-in ESP32 Wi-Fi | Scans 2.4GHz channels 1–14, detailing SSID, RSSI, BSSID (MAC), Channel, Security (OPEN, WEP, WPA, WPA2, WPA3). |
-| **Wi-Fi Handshake & PMKID Sniffer** | Built-in ESP32 Wi-Fi | Promiscuous mode sniffer for EAPOL key frames (0x888e) and RSN IE PMKID hashes. |
-| **Deauthentication Audit Injector** | Built-in ESP32 Wi-Fi | Injects 802.11 Deauth management frames (`0xC0`) to force target station re-authentication. |
-| **Embedded Passphrase Cracker** | ESP32 CPU Engine | Fast dictionary passphrase verification engine testing weak WPA default passphrases. |
-| **Hashcat 22000 Exporter** | Serial & Web Interface | Formats captured EAPOL handshakes and PMKID data into standard `WPA*01*...` / `WPA*02*...` format for cracking with Hashcat or Aircrack-ng. |
-| **Web Portal & SoftAP Server** | ESP32 WebServer | Creates local Access Point `ESP32-Security-Tool` with Web Control Dashboard at `http://192.168.4.1`. |
-| **Hardware & Touch UI** | ILI9341 + XPT2046 | Live landscape dashboard with interactive touch buttons and physical pushbuttons (GPIO 12 = ON/RUN, GPIO 14 = OFF/IDLE, GPIO 0 = Mode Toggle). |
+| **LCD_RST** | **GPIO 33** | Hardware Reset |
+| **LCD_CS** | **GPIO 5** | Display Chip Select |
+| **LCD_RS** | **GPIO 4** | Register / Command Select |
+| **LCD_WR** | **GPIO 2** | Write Enable |
+| **LCD_RD** | **3.3V Rail** | Read Enable (Connect to 3.3V) |
+| **5V / 3V3 / GND** | **5V / 3.3V / GND** | Power & Ground Rails |
+| **LCD_D0 – LCD_D7** | **GPIO 12, 13, 26, 25, 17, 27, 14, 32** | 8-Bit Parallel Data Bus |
+| **SD_SS (CS)** | **GPIO 13** | SD Card Chip Select |
+| **SD_DI / SD_DO / SD_SCK** | **GPIO 23 / 19 / 18** | Shared SPI Bus |
+
+### B. Radio Transceivers (NRF24L01 Black PCB)
+- **Radio 1 (Lower Channels 2402–2440 MHz)**:
+  - `CE` $\rightarrow$ **GPIO 22** | `CSN` $\rightarrow$ **GPIO 21** | `SCK` $\rightarrow$ **GPIO 18** | `MOSI` $\rightarrow$ **GPIO 23** | `MISO` $\rightarrow$ **GPIO 19** | `VCC` $\rightarrow$ **3.3V** | `GND` $\rightarrow$ **GND**
+- **Radio 2 (Upper Channels 2441–2480 MHz)**:
+  - `CE` $\rightarrow$ **GPIO 16** | `CSN` $\rightarrow$ **GPIO 15** | `SCK` $\rightarrow$ **GPIO 18** | `MOSI` $\rightarrow$ **GPIO 23** | `MISO` $\rightarrow$ **GPIO 19** | `VCC` $\rightarrow$ **3.3V** | `GND` $\rightarrow$ **GND**
+
+*Note: Built-in PCB antenna NRF24L01 modules draw only ~12mA each and do NOT require capacitors.*
 
 ---
 
-## 💾 SD Card Information & File Setup
+## 💾 STEP 2: MicroSD Card Setup
 
-You can insert a MicroSD card into the slot on the back of your 2.4" TFT Display Shield (connected to **GPIO 13** / `SD_CS`).
-
-### 📄 Optional SD Card Files:
-
-1. **`wordlist.txt`** *(Root directory of SD card)*:
-   - Create a text file named `wordlist.txt` on your MicroSD card and add custom passphrases (one password per line).
-   - When present, the ESP32 automatically reads passphrases directly from `SD:/wordlist.txt` during audit mode instead of using the 10 built-in default passphrases.
-
-2. **`cracked_keys.txt`** *(Auto-created by ESP32)*:
-   - The device automatically logs successful audit matches to `SD:/cracked_keys.txt` in the format:
-     ```text
-     SSID: NetworkName | Key: Passphrase123
-     ```
-
-*Note: If no SD card is inserted, the device falls back gracefully to internal flash memory.*
+1. Insert your MicroSD card into your computer and format it as **FAT32**.
+2. Open the [`SD_Files/`](file:///c:/Users/Lenovo/Downloads/wifi+bluettoth/wifi-bluetooth_cracker/SD_Files) folder in this repository.
+3. Copy **`wordlist.txt`** to the root directory of your MicroSD card.
+4. Plug the MicroSD card into the SD card slot on the back of your 2.4" TFT Display Shield.
 
 ---
 
-## ⚡ Performance & Thermal Safety
-
-- **Dual-Core 240 MHz Distribution**: Background hardware Wi-Fi/RF sniffing runs on Core 0, while UI display rendering runs on Core 1, keeping CPU load below ~30%.
-- **Zero Radio Contention**: The internal Wi-Fi chip turns off (`WiFi.mode(WIFI_OFF)`) during Bluetooth jamming modes, avoiding radio conflicts and minimizing power draw.
-- **Power & Capacitors**: Power the system with a 5V (1A–2A) USB source. For high-power PA+LNA NRF24L01 modules, attach a **10µF to 47µF capacitor** across `VCC` and `GND` to prevent brownouts.
-
----
-
-## 🛠️ Parts List
-
-- [ESP32 Dev Board](https://s.click.aliexpress.com/e/_oBzks2E)
-- [ILI9341 2.8" SPI Touchscreen Display](https://s.click.aliexpress.com/e/_oBzks2E)
-- [2x NRF24L01+PA+LNA](https://s.click.aliexpress.com/e/_okUsZpp)
-- [2x Capacitors (10µF – 47µF)](https://s.click.aliexpress.com/e/_olkWSDz)
-- [2x Push Buttons (Active LOW)](https://s.click.aliexpress.com/e/_on6KzoP)
-- [Breadboard & Jumper Wires](https://s.click.aliexpress.com/e/_ooo7z5h)
-- [5V Power Supply / Power Bank](https://s.click.aliexpress.com/e/_oneC3BV)
-
----
-
-## 🔌 Hardware Wiring Diagram & Pinout
-
-<img src="https://github.com/stuthemoo/ESP32BluetoothJammer/raw/main/Images/wiring-breadboard.png" width="1000" alt="Breadboard Wiring Diagram">
-
-For complete pinout charts and hardware connection guides, refer to `ESP32_Bluetooth_Jammer_Pinout.html` and `ESP32_Bluetooth_Jammer_Pinout.pdf`.
-
----
-
-## 💻 Uploading Instructions
+## 💻 STEP 3: Arduino IDE Configuration & Libraries
 
 1. Download and install [Arduino IDE](https://www.arduino.cc/en/software).
-2. Add ESP32 Board Manager URL (`https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`).
-3. Install the required libraries via Arduino Library Manager:
-   - `RF24` by TMRh20
-   - `Adafruit GFX Library` by Adafruit
-   - `Adafruit ILI9341` by Adafruit
-   - `XPT2046_Touchscreen` by Paul Stoffregen
-4. Open `BluetoothJammer/BluetoothJammer.ino`.
-5. Select **ESP32 Dev Module**, choose your serial port, and click **Upload**.
+2. Open Arduino IDE -> **File** -> **Preferences** and add the ESP32 Board Manager URL:
+   `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
+3. Go to **Tools** -> **Board** -> **Boards Manager...**, search for `esp32` by Espressif Systems and click **Install**.
+4. Install the required libraries via **Tools** -> **Manage Libraries...**:
+   - **`MCUFRIEND_kbv`** by David Prentice
+   - **`TouchScreen`** by Adafruit
+   - **`RF24`** by TMRh20
+   - **`Adafruit GFX Library`** by Adafruit
 
 ---
 
-## ⚡ Serial CLI Commands
+## ⚡ STEP 4: Compiling & Uploading Firmware
 
-Connect to the ESP32 at `115200` baud rate to issue command line directives:
+1. Open [`BluetoothJammer/BluetoothJammer.ino`](file:///c:/Users/Lenovo/Downloads/wifi+bluettoth/wifi-bluetooth_cracker/BluetoothJammer/BluetoothJammer.ino) in Arduino IDE.
+2. Select Board: **Tools** -> **Board** -> **ESP32 Arduino** -> **ESP32 Dev Module**.
+3. Select Port: **Tools** -> **Port** -> Choose your ESP32 COM port.
+4. Click **Upload** (press the physical **BOOT** button on the ESP32 if uploading pauses at `Connecting...`).
 
-- `scan`: Trigger immediate 2.4GHz Wi-Fi scan.
-- `deauth`: Launch deauth frame injection against selected AP target.
-- `hashcat`: Print all captured EAPOL handshakes & PMKID hashes in Hashcat mode 22000 output format.
+---
+
+## 🎮 STEP 5: How to Operate the System
+
+1. **3D Startup Boot Animation**:
+   - On power-up, the display renders a 3D rotating wireframe cube and progress bar while initializing hardware.
+
+2. **Touchscreen Navigation**:
+   - Tap **MODE** at the bottom of the screen (or press the physical **BOOT** button on GPIO 0) to cycle modes:
+     `BLE JAMMER` $\rightarrow$ `BT CLASSIC` $\rightarrow$ `WIFI SCANNER` $\rightarrow$ `WIFI HANDSHAKE` $\rightarrow$ `WIFI CRACKER` $\rightarrow$ `WEB PORTAL`
+   - Tap **TURN ON / RUN** to start active scanning or operation.
+   - Tap **TURN OFF / IDLE** to pause.
+
+3. **Web Control Dashboard (`http://192.168.4.1`)**:
+   - In `WEB PORTAL` mode, connect your phone or laptop Wi-Fi to **`ESP32-Security-Tool`** (Password: `12345678`).
+   - Open browser at `http://192.168.4.1` for live network scanning and Hashcat hash exporting.
+
+4. **Serial CLI Controls**:
+   - Connect Serial Monitor at **115200 baud**:
+     - Type `scan` to trigger immediate Wi-Fi scanning.
+     - Type `hashcat` to print captured 4-way handshakes and PMKIDs in Hashcat mode 22000 format.
 
 ---
 

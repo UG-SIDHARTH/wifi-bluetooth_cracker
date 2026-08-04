@@ -642,6 +642,112 @@ void startWebPortal() {
 // ----------------------------------------------------
 // Display Functions (2.4" TFT LCD Shield - 8-Bit Parallel)
 // ----------------------------------------------------
+void runStartupAnimation() {
+  tft.fillScreen(COLOR_BG);
+
+  // 3D Cube Vertices (8 3D Points)
+  float vertices[8][3] = {
+    {-24, -24, -24}, { 24, -24, -24}, { 24,  24, -24}, {-24,  24, -24},
+    {-24, -24,  24}, { 24, -24,  24}, { 24,  24,  24}, {-24,  24,  24}
+  };
+
+  int edges[12][2] = {
+    {0, 1}, {1, 2}, {2, 3}, {3, 0},
+    {4, 5}, {5, 6}, {6, 7}, {7, 4},
+    {0, 4}, {1, 5}, {2, 6}, {3, 7}
+  };
+
+  int prevX[8], prevY[8];
+  int currX[8], currY[8];
+
+  float angleX = 0, angleY = 0, angleZ = 0;
+  int centerX = 160;
+  int centerY = 72;
+
+  // Title Text
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(60, 140);
+  tft.print("CRADLEGUARD 3.0");
+
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setTextSize(1);
+  tft.setCursor(55, 162);
+  tft.print("3D HARDWARE CORE INITIALIZING...");
+
+  // Progress Bar Outline
+  int barX = 40;
+  int barY = 185;
+  int barWidth = 240;
+  int barHeight = 16;
+  tft.drawRoundRect(barX, barY, barWidth, barHeight, 4, COLOR_ACCENT);
+
+  // 3D Matrix Rotation Loop (45 Frames)
+  for (int frame = 0; frame < 45; frame++) {
+    // Calculate 3D to 2D Perspective Projection
+    for (int i = 0; i < 8; i++) {
+      float x = vertices[i][0];
+      float y = vertices[i][1];
+      float z = vertices[i][2];
+
+      // Rotate X
+      float y1 = y * cos(angleX) - z * sin(angleX);
+      float z1 = y * sin(angleX) + z * cos(angleX);
+
+      // Rotate Y
+      float x2 = x * cos(angleY) + z1 * sin(angleY);
+      float z2 = -x * sin(angleY) + z1 * cos(angleY);
+
+      // Rotate Z
+      float x3 = x2 * cos(angleZ) - y1 * sin(angleZ);
+      float y3 = x2 * sin(angleZ) + y1 * cos(angleZ);
+
+      // Perspective Projection
+      float fov = 180.0 / (180.0 + z2);
+      currX[i] = centerX + (int)(x3 * fov);
+      currY[i] = centerY + (int)(y3 * fov);
+    }
+
+    // Erase Previous 3D Frame
+    if (frame > 0) {
+      for (int e = 0; e < 12; e++) {
+        tft.drawLine(prevX[edges[e][0]], prevY[edges[e][0]], prevX[edges[e][1]], prevY[edges[e][1]], COLOR_BG);
+      }
+    }
+
+    // Draw New 3D Wireframe Frame
+    for (int e = 0; e < 12; e++) {
+      uint16_t color = (e < 4) ? COLOR_ACCENT : (e < 8 ? COLOR_YELLOW : COLOR_GREEN);
+      tft.drawLine(currX[edges[e][0]], currY[edges[e][0]], currX[edges[e][1]], currY[edges[e][1]], color);
+    }
+
+    // Save projected 2D coordinates for erase pass
+    for (int i = 0; i < 8; i++) {
+      prevX[i] = currX[i];
+      prevY[i] = currY[i];
+    }
+
+    // Progress Bar Increment
+    int fillW = map(frame, 0, 44, 0, barWidth - 4);
+    tft.fillRoundRect(barX + 2, barY + 2, fillW, barHeight - 4, 2, COLOR_GREEN);
+
+    int percent = map(frame, 0, 44, 0, 100);
+    tft.fillRect(140, 210, 50, 15, COLOR_BG);
+    tft.setCursor(145, 210);
+    tft.setTextColor(COLOR_YELLOW);
+    tft.setTextSize(1);
+    tft.print(String(percent) + "%");
+
+    angleX += 0.12;
+    angleY += 0.15;
+    angleZ += 0.08;
+
+    delay(35);
+  }
+
+  delay(300);
+}
+
 void initDisplay() {
   uint16_t ID = tft.readID();
   Serial.print("TFT LCD Controller ID: 0x");
@@ -650,7 +756,9 @@ void initDisplay() {
   tft.begin(ID);
   tft.setRotation(1); // Landscape mode (320x240)
   tft.fillScreen(COLOR_BG);
-  Serial.println("2.4\" TFT LCD Shield initialized (8-bit parallel bus).");
+  Serial.println("MCUFRIEND 2.4\" TFT LCD Shield initialized.");
+
+  runStartupAnimation();
 }
 
 void drawStaticUI() {
