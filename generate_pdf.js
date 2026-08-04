@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const pdfPath = path.join(__dirname, 'ESP32_Bluetooth_Jammer_Pinout.pdf');
+const imagePath = path.join(__dirname, 'Images', 'wiring-full-breadboard.png');
+
 const doc = new PDFDocument({ margin: 40, size: 'A4' });
 
 doc.pipe(fs.createWriteStream(pdfPath));
@@ -20,7 +22,7 @@ const COLOR_BG_ALT = '#f8fafc';
 // Header
 doc.rect(40, 40, 515, 65).fill(COLOR_PRIMARY);
 doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold').text('ESP32 BT JAMMER & WI-FI SECURITY SUITE', 55, 50);
-doc.fontSize(11).font('Helvetica').fillColor('#93c5fd').text('Master Hardware Pinout, RF Transceiver & Wi-Fi Sniffer Guide', 55, 74);
+doc.fontSize(11).font('Helvetica').fillColor('#93c5fd').text('Master Hardware Pinout, RF Transceiver & Wiring Diagram Guide', 55, 74);
 
 // Warning Box
 doc.rect(40, 115, 515, 45).fill(COLOR_WARN_BG);
@@ -30,8 +32,20 @@ doc.font('Helvetica').fontSize(8.5).text('This device design and documentation a
 
 let y = 175;
 
-// Section 1: ESP32 Pin Allocation Box
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('1. ESP32 Pin Allocation Overview', 40, y);
+// Section 1: Full Breadboard Wiring Diagram
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('1. Full Master Hardware Breadboard Wiring Diagram', 40, y);
+y += 20;
+
+if (fs.existsSync(imagePath)) {
+  doc.image(imagePath, 40, y, { width: 515 });
+  y += 280;
+}
+
+// Section 2: ESP32 Pin Allocation Box (Moved to Page 2)
+doc.addPage();
+y = 40;
+
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('2. ESP32 Pin Allocation Overview', 40, y);
 y += 20;
 
 doc.rect(40, y, 515, 115).fill('#1e293b');
@@ -70,10 +84,12 @@ for (let i = 0; i < leftPins.length; i++) {
   py += 10.5;
 }
 
-y += 130;
+// PAGE 2
+doc.addPage();
+y = 40;
 
-// Section 2: Shared SPI Bus Table & Wi-Fi Radio
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('2. Hardware Interfaces (VSPI & ESP32 Wi-Fi Radio)', 40, y);
+// Section 3: Shared SPI Bus Table & Wi-Fi Radio
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('3. Hardware Interfaces (VSPI & ESP32 Wi-Fi Radio)', 40, y);
 y += 20;
 
 function drawTable(headers, rows, startY, colWidths) {
@@ -120,8 +136,8 @@ y = drawTable(
 
 y += 15;
 
-// Section 3: Radio 1 & 2 Tables
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('3. Radio Transceiver Modules (NRF24L01)', 40, y);
+// Section 4: Radio 1 & 2 Tables
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('4. Radio Transceiver Modules (NRF24L01)', 40, y);
 y += 18;
 
 doc.fillColor('#0f172a').fontSize(10).font('Helvetica-Bold').text('Radio #1 (Lower Channels 2402-2440 MHz):', 40, y);
@@ -155,12 +171,10 @@ y = drawTable(
   [120, 110, 160, 125]
 );
 
-// PAGE 2
-doc.addPage();
-y = 40;
+y += 15;
 
-// Section 4: Display & Touch
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('4. ILI9341 2.8" SPI Touchscreen Display & Touch Controller', 40, y);
+// Section 5: Display & Touch
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. ILI9341 2.8" SPI Touchscreen Display & Touch Controller', 40, y);
 y += 18;
 
 y = drawTable(
@@ -180,10 +194,12 @@ y = drawTable(
   [140, 110, 140, 125]
 );
 
-y += 20;
+// PAGE 3
+doc.addPage();
+y = 40;
 
-// Section 5: Push Buttons
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. Hardware Pushbuttons & System Controls', 40, y);
+// Section 6: Push Buttons
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('6. Hardware Pushbuttons & System Controls', 40, y);
 y += 18;
 
 y = drawTable(
@@ -200,8 +216,8 @@ y = drawTable(
 
 y += 25;
 
-// Section 6: Power & Capacitor Notes
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('6. Power Supply & Capacitor Recommendations', 40, y);
+// Section 7: Power & Capacitor Notes
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('7. Power Supply & Capacitor Recommendations', 40, y);
 y += 18;
 
 doc.fillColor(COLOR_TEXT).fontSize(9.5).font('Helvetica');

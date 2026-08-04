@@ -137,7 +137,12 @@
     This documentation and device design are strictly for educational and testing purposes in controlled laboratory environments. Operating RF signal jamming equipment or performing unauthorized packet injection is illegal in many jurisdictions.
   </div>
 
-  <div class="section-title">1. ESP32 Pin Allocation Schematic</div>
+  <div class="section-title">1. Master Hardware Breadboard Wiring Diagram</div>
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="Images/wiring-full-breadboard.png" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #cbd5e1;" alt="Master Hardware Breadboard Wiring Diagram">
+  </div>
+
+  <div class="section-title">2. ESP32 Pin Allocation Schematic</div>
   <div class="esp32-box">
     <div style="text-align:center; font-weight:bold; color:#facc15; margin-bottom:12px;">ESP32 30-PIN DEV BOARD LAYOUT</div>
     <div class="esp32-grid">
@@ -251,30 +256,25 @@
 
   <div style="page-break-before: always;"></div>
 
-  <h3>C. ILI9341 2.8" SPI TFT Touchscreen Display</h3>
+  <h3>C. 2.4" TFT LCD Shield (8-Bit Parallel Bus)</h3>
   <table>
     <thead>
       <tr>
-        <th>Display Pin</th>
+        <th>Shield Pin Label</th>
         <th>ESP32 Pin</th>
         <th>Function</th>
         <th>Signal Category</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td>VCC</td><td><strong>3.3V / 5V</strong></td><td>Display Power</td><td><span class="badge badge-power">POWER</span></td></tr>
+      <tr><td>5V / 3V3</td><td><strong>5V / 3.3V Rail</strong></td><td>Display Power</td><td><span class="badge badge-power">POWER</span></td></tr>
       <tr><td>GND</td><td><strong>GND Rail</strong></td><td>Ground</td><td><span class="badge badge-power">GROUND</span></td></tr>
-      <tr><td>CS</td><td><strong>GPIO 5</strong></td><td>TFT Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
-      <tr><td>RESET / RST</td><td><strong>GPIO 33</strong></td><td>TFT Reset</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
-      <tr><td>DC / RS</td><td><strong>GPIO 4</strong></td><td>Data / Command Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
-      <tr><td>SDI / MOSI</td><td><strong>GPIO 23</strong></td><td>SPI Data In</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
-      <tr><td>SCK / CLK</td><td><strong>GPIO 18</strong></td><td>SPI Clock</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
-      <tr><td>LED / BL</td><td><strong>GPIO 32</strong></td><td>Backlight Control</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
-      <tr><td>SDO / MISO</td><td><strong>GPIO 19</strong></td><td>SPI Data Out</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
-      <tr><td>T_CLK</td><td><strong>GPIO 18</strong></td><td>Touch SPI Clock</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
-      <tr><td>T_CS</td><td><strong>GPIO 27</strong></td><td>Touch Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
-      <tr><td>T_DIN</td><td><strong>GPIO 23</strong></td><td>Touch SPI MOSI</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
-      <tr><td>T_DO</td><td><strong>GPIO 19</strong></td><td>Touch SPI MISO</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>LCD_RST</td><td><strong>GPIO 33</strong></td><td>Hardware Reset</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>LCD_CS</td><td><strong>GPIO 5</strong></td><td>Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>LCD_RS</td><td><strong>GPIO 4</strong></td><td>Register / Command Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>LCD_WR</td><td><strong>GPIO 2</strong></td><td>Write Enable</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>LCD_RD</td><td><strong>3.3V Rail</strong></td><td>Read Enable (Tie to HIGH)</td><td><span class="badge badge-power">POWER</span></td></tr>
+      <tr><td>LCD_D0 - LCD_D7</td><td><strong>GPIO 12, 13, 26, 25, 17, 27, 14, 32</strong></td><td>8-Bit Parallel Data Bus</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
     </tbody>
   </table>
 

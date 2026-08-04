@@ -18,8 +18,8 @@
 #include <SPI.h>
 #include <RF24.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_ILI9341.h>
-#include <XPT2046_Touchscreen.h>
+#include <MCUFRIEND_kbv.h>
+#include <TouchScreen.h>
 
 // ESP32 Wi-Fi & WebServer Libraries
 #include <WiFi.h>
@@ -37,15 +37,6 @@
 #define BUTTON_ON_PIN   12 // Physical Pushbutton for TURN ON / RUN
 #define BUTTON_OFF_PIN  14 // Physical Pushbutton for TURN OFF / IDLE
 
-// TFT Display Pins (ILI9341 SPI)
-#define TFT_CS   5
-#define TFT_DC   4
-#define TFT_RST  33
-#define TFT_BL   32  // Backlight PWM pin
-
-// Touchscreen Pins (XPT2046 SPI)
-#define TOUCH_CS 27
-
 // 16 MHz SPI speed for RF24
 constexpr int SPI_SPEED = 16000000;
 
@@ -53,9 +44,15 @@ constexpr int SPI_SPEED = 16000000;
 RF24 radio1(22, 21, SPI_SPEED); // Radio 1 on CE 22, CSN 21
 RF24 radio2(16, 15, SPI_SPEED); // Radio 2 on CE 16, CSN 15
 
-// Display & Touch Objects
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
-XPT2046_Touchscreen touch(TOUCH_CS);
+// MCUFRIEND 8-Bit Parallel Display Object
+MCUFRIEND_kbv tft;
+
+// Touchscreen pin definitions for 2.4" TFT Shield
+#define YP A3  // LCD_RS (GPIO 4)
+#define XM A2  // LCD_CS (GPIO 5)
+#define YM 9   // LCD_D1 (GPIO 13)
+#define XP 8   // LCD_D0 (GPIO 12)
+TouchScreen touch = TouchScreen(XP, YP, XM, YM, 300);
 
 // WebServer instance for Web Portal Mode
 WebServer webServer(80);
@@ -572,12 +569,11 @@ void startWebPortal() {
 // Display Functions (ILI9341)
 // ----------------------------------------------------
 void initDisplay() {
-  tft.begin();
+  uint16_t ID = tft.readID();
+  if (ID == 0xD3D3 || ID == 0x0) ID = 0x9341; // Default to ILI9341 if unidentified
+  tft.begin(ID);
   tft.setRotation(1);
   tft.fillScreen(COLOR_BG);
-
-  touch.begin();
-  touch.setRotation(1);
 }
 
 void drawStaticUI() {
@@ -677,14 +673,20 @@ void updateDisplayUI(bool forceRedraw) {
 // Touch & Pushbutton Handlers
 // ----------------------------------------------------
 void checkTouch() {
-  if (!touch.touched()) return;
+  TSPoint p = touch.getPoint();
+  // Restore pin modes after reading resistive touchscreen
+  pinMode(YP, OUTPUT);
+  pinMode(XM, OUTPUT);
+  digitalWrite(YP, HIGH);
+  digitalWrite(XM, HIGH);
+
+  if (p.z < 10 || p.z > 1000) return;
   if (millis() - lastTouchTime < 300) return;
 
-  TS_Point p = touch.getPoint();
   lastTouchTime = millis();
 
-  int touchX = map(p.x, 200, 3700, 0, 320);
-  int touchY = map(p.y, 200, 3700, 0, 240);
+  int touchX = map(p.y, 150, 920, 0, 320);
+  int touchY = map(p.x, 120, 900, 0, 240);
 
   // Button 1: [ TURN ON / RUN ] (X: 15-150, Y: 158-194)
   if (touchX >= 15 && touchX <= 150 && touchY >= 158 && touchY <= 194) {
