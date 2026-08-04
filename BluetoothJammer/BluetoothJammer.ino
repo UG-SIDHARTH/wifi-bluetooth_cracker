@@ -7,7 +7,7 @@
   3. Wi-Fi 4-Way EAPOL Handshake & PMKID Promiscuous Sniffer + Deauth Audit Injector
   4. Embedded Wi-Fi Dictionary Password Auditor & Hashcat 22000 Exporter
   5. Web Control Portal & SoftAP Dashboard (http://192.168.4.1)
-  6. ILI9341 2.8" SPI Touchscreen & Physical Pushbuttons (GPIO 12, 14, 0)
+  6. 2.4" TFT LCD Shield (8-Bit Parallel) & Physical Pushbuttons (GPIO 12, 14, 0)
 
   More info: https://github.com/stuthemoo/ESP32BluetoothJammer
 
@@ -192,8 +192,6 @@ void setup() {
   pinMode(BUTTON_ON_PIN, INPUT_PULLUP);
   pinMode(BUTTON_OFF_PIN, INPUT_PULLUP);
   pinMode(LED_PIN, OUTPUT);
-  pinMode(TFT_BL, OUTPUT);
-  digitalWrite(TFT_BL, HIGH);
 
   for (uint8_t i = 0; i < 32; i++) payload[i] = random(256);
   for (int i = 0; i < 79; i++) bluetooth_channels[i] = i + 2;
@@ -524,18 +522,45 @@ void startWebPortal() {
   IPAddress apIP = WiFi.softAPIP();
 
   webServer.on("/", []() {
-    String html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1'><title>ESP32 Security Suite</title>";
-    html += "<style>body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:20px;}";
-    html += ".card{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:15px;}";
-    html += "button{background:#2563eb;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;}";
-    html += "</style></head><body>";
-    html += "<h1>CRADLEGUARD WEB PORTAL</h1>";
-    html += "<div class='card'><h3>System State</h3><p>SoftAP IP: " + WiFi.softAPIP().toString() + "</p>";
-    html += "<p>Mode: " + getModeName(currentMode) + "</p>";
-    html += "<p>Handshakes Captured: " + String(eapolCount) + "</p></div>";
-    html += "<div class='card'><h3>Actions</h3>";
-    html += "<a href='/scan'><button>Scan Wi-Fi Networks</button></a> ";
-    html += "<a href='/handshakes'><button>Export Hashcat 22000</button></a>";
+    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+    html += "<title>ESP32 Security Suite Dashboard</title>";
+    html += "<style>";
+    html += ":root { --bg: #0f172a; --card: #1e293b; --accent: #2563eb; --accent-hover: #1d4ed8; --text: #f8fafc; --muted: #94a3b8; --border: #334155; }";
+    html += "body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }";
+    html += ".container { max-width: 800px; margin: 0 auto; }";
+    html += ".header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--border); padding: 24px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }";
+    html += ".header h1 { margin: 0; font-size: 24px; letter-spacing: 0.5px; color: #38bdf8; }";
+    html += ".header p { margin: 6px 0 0 0; color: var(--muted); font-size: 14px; }";
+    html += ".grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px; }";
+    html += ".card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; }";
+    html += ".card h3 { margin-top: 0; font-size: 16px; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; }";
+    html += ".metric { font-size: 28px; font-weight: bold; color: #facc15; margin: 8px 0; }";
+    html += "table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }";
+    html += "th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }";
+    html += "th { background: #0f172a; color: var(--muted); font-size: 12px; text-transform: uppercase; }";
+    html += ".btn { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-block; }";
+    html += ".btn:hover { background: var(--accent-hover); }";
+    html += ".badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #0284c7; color: white; }";
+    html += "</style>";
+    html += "<script>";
+    html += "function refreshScan(){ fetch('/scan').then(r=>r.json()).then(data=>{";
+    html += "let html='<tr><th>SSID</th><th>RSSI</th><th>Channel</th></tr>';";
+    html += "data.forEach(item=>{ html += `<tr><td>\${item.ssid}</td><td><span class=\"badge\">\${item.rssi} dBm</span></td><td>\${item.ch}</td></tr>`; });";
+    html += "document.getElementById('scanTable').innerHTML = html;";
+    html += "}); }";
+    html += "</script>";
+    html += "</head><body><div class='container'>";
+    html += "<div class='header'><h1>ESP32 SECURITY SUITE DASHBOARD</h1><p>SoftAP Gateway: http://" + WiFi.softAPIP().toString() + "</p></div>";
+    html += "<div class='grid'>";
+    html += "<div class='card'><h3>Active System Mode</h3><div class='metric'>" + getModeName(currentMode) + "</div></div>";
+    html += "<div class='card'><h3>Captured Handshakes</h3><div class='metric'>" + String(eapolCount) + "</div></div>";
+    html += "</div>";
+    html += "<div class='card'><h3>Quick Actions & Control</h3><p>";
+    html += "<button class='btn' onclick='refreshScan()'>Scan Wi-Fi Networks</button> ";
+    html += "<a href='/handshakes' class='btn' style='background:#10b981;'>Export Hashcat Hashes</a>";
+    html += "</p>";
+    html += "<table id='scanTable'><tr><th>SSID</th><th>RSSI</th><th>Channel</th></tr><tr><td colspan='3' style='color:var(--muted);'>Click 'Scan Wi-Fi Networks' to view nearby Access Points...</td></tr></table>";
+    html += "</div>";
     html += "</div></body></html>";
     webServer.send(200, "text/html", html);
   });
@@ -566,14 +591,17 @@ void startWebPortal() {
 }
 
 // ----------------------------------------------------
-// Display Functions (ILI9341)
+// Display Functions (2.4" TFT LCD Shield - 8-Bit Parallel)
 // ----------------------------------------------------
 void initDisplay() {
   uint16_t ID = tft.readID();
-  if (ID == 0xD3D3 || ID == 0x0) ID = 0x9341; // Default to ILI9341 if unidentified
+  Serial.print("TFT LCD Controller ID: 0x");
+  Serial.println(ID, HEX);
+  if (ID == 0xD3D3 || ID == 0x0) ID = 0x9341; // Default fallback
   tft.begin(ID);
-  tft.setRotation(1);
+  tft.setRotation(1); // Landscape mode (320x240)
   tft.fillScreen(COLOR_BG);
+  Serial.println("2.4\" TFT LCD Shield initialized (8-bit parallel bus).");
 }
 
 void drawStaticUI() {

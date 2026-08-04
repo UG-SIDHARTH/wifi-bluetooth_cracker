@@ -173,25 +173,30 @@ y = drawTable(
 
 y += 15;
 
-// Section 5: Display & Touch
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. ILI9341 2.8" SPI Touchscreen Display & Touch Controller', 40, y);
+// Section 5: Display (2.4" TFT LCD Shield - 8-Bit Parallel)
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. 2.4" TFT LCD Shield (8-Bit Parallel Bus)', 40, y);
 y += 18;
 
 y = drawTable(
-  ['Display / Touch Pin', 'ESP32 Pin', 'Function', 'Signal Category'],
+  ['Shield Pin', 'ESP32 Pin', 'Function', 'Signal Category'],
   [
-    ['VCC / GND', '3.3V / GND', 'Display Power Rail', 'Power / Ground'],
-    ['CS', 'GPIO 5', 'TFT Chip Select', 'Dedicated SPI CS'],
-    ['RESET / RST', 'GPIO 33', 'TFT Hardware Reset', 'Dedicated Control'],
-    ['DC / RS', 'GPIO 4', 'Data / Command Select', 'Dedicated Control'],
-    ['LED / BL', 'GPIO 32', 'Screen Backlight PWM', 'Dedicated Control'],
-    ['SDI (MOSI) / SDO (MISO)', 'GPIO 23 / 19', 'TFT Display SPI Data', 'Shared SPI'],
-    ['SCK / CLK', 'GPIO 18', 'TFT Display SPI Clock', 'Shared SPI'],
-    ['T_CS', 'GPIO 27', 'Touch Controller CS', 'Dedicated SPI CS'],
-    ['T_CLK / T_DIN / T_DO', 'GPIO 18 / 23 / 19', 'Touch Controller SPI', 'Shared SPI']
+    ['5V / 3V3 / GND', '5V / 3.3V / GND', 'Display Power & Ground', 'Power / Ground'],
+    ['LCD_RST', 'GPIO 33', 'Hardware Reset', 'Dedicated Control'],
+    ['LCD_CS', 'GPIO 5', 'Chip Select', 'Dedicated Control'],
+    ['LCD_RS', 'GPIO 4', 'Register / Command Select', 'Dedicated Control'],
+    ['LCD_WR', 'GPIO 2', 'Write Enable', 'Dedicated Control'],
+    ['LCD_RD', '3.3V (Tie HIGH)', 'Read Enable (Not Used)', 'Power'],
+    ['LCD_D0', 'GPIO 12', 'Data Bit 0', '8-Bit Parallel'],
+    ['LCD_D1', 'GPIO 13', 'Data Bit 1', '8-Bit Parallel'],
+    ['LCD_D2', 'GPIO 26', 'Data Bit 2', '8-Bit Parallel'],
+    ['LCD_D3', 'GPIO 25', 'Data Bit 3', '8-Bit Parallel'],
+    ['LCD_D4', 'GPIO 17', 'Data Bit 4', '8-Bit Parallel'],
+    ['LCD_D5', 'GPIO 27', 'Data Bit 5', '8-Bit Parallel'],
+    ['LCD_D6', 'GPIO 14', 'Data Bit 6', '8-Bit Parallel'],
+    ['LCD_D7', 'GPIO 32', 'Data Bit 7', '8-Bit Parallel']
   ],
   y,
-  [140, 110, 140, 125]
+  [100, 120, 160, 135]
 );
 
 // PAGE 3
