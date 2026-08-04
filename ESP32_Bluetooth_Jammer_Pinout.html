@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Bluetooth Jammer Master Pinout & Wiring Guide</title>
+<title>ESP32 Bluetooth & Wi-Fi Security Suite Pinout & Wiring Guide</title>
 <style>
   @page {
     size: A4 portrait;
@@ -26,7 +26,7 @@
   }
   .header h1 {
     margin: 0;
-    font-size: 26px;
+    font-size: 24px;
     letter-spacing: 0.5px;
   }
   .header p {
@@ -88,6 +88,7 @@
   .badge-dedicated { background-color: #fef3c7; color: #92400e; }
   .badge-power { background-color: #fee2e2; color: #991b1b; }
   .badge-btn { background-color: #dcfce7; color: #166534; }
+  .badge-wifi { background-color: #f3e8ff; color: #6b21a8; }
 
   .esp32-box {
     background-color: #0f172a;
@@ -127,13 +128,13 @@
 <body>
 
   <div class="header">
-    <h1>ESP32 BLUETOOTH JAMMER PINOUT & WIRING GUIDE</h1>
-    <p>Complete Wiring Specifications for Dual NRF24L01 + ILI9341 Touchscreen + Hardware Buttons</p>
+    <h1>ESP32 BT JAMMER & WI-FI SECURITY SUITE PINOUT GUIDE</h1>
+    <p>Hardware Wiring Specifications for Dual NRF24L01 + Wi-Fi Promiscuous Sniffer + ILI9341 Touchscreen</p>
   </div>
 
   <div class="warning-box">
     <strong>⚠️ LEGAL & EDUCATIONAL DISCLAIMER</strong><br>
-    This documentation and device design are strictly for educational and testing purposes in controlled laboratory environments. Operating RF signal jamming equipment is illegal in many jurisdictions and can disrupt public safety and emergency communications.
+    This documentation and device design are strictly for educational and testing purposes in controlled laboratory environments. Operating RF signal jamming equipment or performing unauthorized packet injection is illegal in many jurisdictions.
   </div>
 
   <div class="section-title">1. ESP32 Pin Allocation Schematic</div>
@@ -163,16 +164,16 @@
     </div>
   </div>
 
-  <div class="section-title">2. Shared Hardware SPI Bus (VSPI)</div>
+  <div class="section-title">2. Shared Hardware SPI Bus (VSPI) & Built-in Wi-Fi Radio</div>
   <p style="font-size:13px; color:#475569;">
-    The ESP32 uses a single high-speed Hardware SPI bus (VSPI) shared across Radio 1, Radio 2, the TFT Display, and the Touchscreen controller.
+    The ESP32 uses a single high-speed Hardware SPI bus (VSPI) shared across Radio 1, Radio 2, the TFT Display, and the Touchscreen controller. The internal ESP32 802.11 b/g/n Wi-Fi radio operates concurrently for Wi-Fi scanning, promiscuous EAPOL handshake capturing, and Web Portal serving.
   </p>
   <table>
     <thead>
       <tr>
-        <th>SPI Bus Signal</th>
+        <th>Signal / Interface</th>
         <th>ESP32 GPIO Pin</th>
-        <th>Connected Modules</th>
+        <th>Connected Modules / Mode</th>
         <th>Type</th>
       </tr>
     </thead>
@@ -194,6 +195,12 @@
         <td><strong>GPIO 23</strong></td>
         <td>Radio 1, Radio 2, TFT Display (SDI), Touch (T_DIN)</td>
         <td><span class="badge badge-shared">SHARED SPI</span></td>
+      </tr>
+      <tr>
+        <td><strong>Wi-Fi Radio (2.4GHz)</strong></td>
+        <td><strong>Internal Antenna</strong></td>
+        <td>802.11 AP/Station Scanning, Promiscuous Sniffer, Web Portal</td>
+        <td><span class="badge badge-wifi">INTERNAL RF</span></td>
       </tr>
     </tbody>
   </table>
@@ -283,19 +290,19 @@
     </thead>
     <tbody>
       <tr>
-        <td><strong>TURN ON Pushbutton</strong></td>
+        <td><strong>TURN ON / RUN Pushbutton</strong></td>
         <td><strong>GPIO 12</strong></td>
         <td>One leg to <strong>GPIO 12</strong>, other leg to <strong>GND</strong></td>
         <td><span class="badge badge-btn">INPUT_PULLUP</span></td>
       </tr>
       <tr>
-        <td><strong>TURN OFF Pushbutton</strong></td>
+        <td><strong>TURN OFF / IDLE Pushbutton</strong></td>
         <td><strong>GPIO 14</strong></td>
         <td>One leg to <strong>GPIO 14</strong>, other leg to <strong>GND</strong></td>
         <td><span class="badge badge-btn">INPUT_PULLUP</span></td>
       </tr>
       <tr>
-        <td><strong>BOOT Mode Button</strong></td>
+        <td><strong>BOOT Mode Switcher</strong></td>
         <td><strong>GPIO 0</strong></td>
         <td>Built-in BOOT button on ESP32 board</td>
         <td><span class="badge badge-btn">INTERNAL</span></td>
@@ -316,7 +323,7 @@
   </ul>
 
   <div class="footer">
-    ESP32 Bluetooth Jammer System Pinout Document • Generated automatically for CradleGuard 2.3
+    ESP32 BT Jammer & Wi-Fi Security Suite Pinout Document • Generated automatically for CradleGuard 3.0
   </div>
 
 </body>

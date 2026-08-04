@@ -19,14 +19,14 @@ const COLOR_BG_ALT = '#f8fafc';
 
 // Header
 doc.rect(40, 40, 515, 65).fill(COLOR_PRIMARY);
-doc.fillColor('#ffffff').fontSize(18).font('Helvetica-Bold').text('ESP32 BLUETOOTH JAMMER', 55, 52);
-doc.fontSize(12).font('Helvetica').fillColor('#93c5fd').text('Master Hardware Pinout & Wiring Specifications', 55, 76);
+doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold').text('ESP32 BT JAMMER & WI-FI SECURITY SUITE', 55, 50);
+doc.fontSize(11).font('Helvetica').fillColor('#93c5fd').text('Master Hardware Pinout, RF Transceiver & Wi-Fi Sniffer Guide', 55, 74);
 
 // Warning Box
 doc.rect(40, 115, 515, 45).fill(COLOR_WARN_BG);
 doc.rect(40, 115, 5, 45).fill(COLOR_WARN_BORDER);
 doc.fillColor(COLOR_WARN_TEXT).fontSize(9).font('Helvetica-Bold').text('LEGAL & EDUCATIONAL DISCLAIMER:', 55, 122);
-doc.font('Helvetica').fontSize(8.5).text('This device design and documentation are strictly for educational and testing purposes in controlled lab environments. RF signal jamming is illegal in many jurisdictions.', 55, 136, { width: 490 });
+doc.font('Helvetica').fontSize(8.5).text('This device design and documentation are strictly for educational and authorized penetration testing in controlled environments. Operating RF jammers or packet injection without authorization is illegal.', 55, 136, { width: 490 });
 
 let y = 175;
 
@@ -72,8 +72,8 @@ for (let i = 0; i < leftPins.length; i++) {
 
 y += 130;
 
-// Section 2: Shared SPI Bus Table
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('2. Shared Hardware SPI Bus (VSPI)', 40, y);
+// Section 2: Shared SPI Bus Table & Wi-Fi Radio
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('2. Hardware Interfaces (VSPI & ESP32 Wi-Fi Radio)', 40, y);
 y += 20;
 
 function drawTable(headers, rows, startY, colWidths) {
@@ -107,14 +107,15 @@ function drawTable(headers, rows, startY, colWidths) {
 }
 
 y = drawTable(
-  ['Signal', 'ESP32 Pin', 'Connected Modules', 'Type'],
+  ['Signal / Interface', 'ESP32 Pin', 'Connected Modules / Mode', 'Type'],
   [
     ['SCK (Clock)', 'GPIO 18', 'Radio 1, Radio 2, TFT SCK, Touch T_CLK', 'Shared SPI'],
     ['MISO (Master In)', 'GPIO 19', 'Radio 1, Radio 2, TFT SDO, Touch T_DO', 'Shared SPI'],
-    ['MOSI (Master Out)', 'GPIO 23', 'Radio 1, Radio 2, TFT SDI, Touch T_DIN', 'Shared SPI']
+    ['MOSI (Master Out)', 'GPIO 23', 'Radio 1, Radio 2, TFT SDI, Touch T_DIN', 'Shared SPI'],
+    ['Wi-Fi 802.11 b/g/n', 'Internal RF', 'AP Scanning, Promiscuous Sniffer, Web Portal', 'Internal RF']
   ],
   y,
-  [110, 80, 235, 90]
+  [120, 80, 225, 90]
 );
 
 y += 15;
@@ -209,7 +210,7 @@ y += 16;
 doc.text('2. High-Power PA+LNA Modules: Draw ~115mA peak each. Add a 10uF-47uF capacitor across VCC & GND of each module to prevent brownouts.', 50, y);
 y += 25;
 
-doc.fontSize(8.5).fillColor('#64748b').text('Document generated automatically for CradleGuard 2.3 ESP32 Bluetooth Jammer System.', 40, 780, { align: 'center', width: 515 });
+doc.fontSize(8.5).fillColor('#64748b').text('Document generated automatically for CradleGuard 3.0 ESP32 Security Suite.', 40, 780, { align: 'center', width: 515 });
 
 doc.end();
 console.log('PDF generated successfully at:', pdfPath);
