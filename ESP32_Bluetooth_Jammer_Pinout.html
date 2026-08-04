@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ESP32 Bluetooth Jammer Master Pinout & Wiring Guide</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    color: #ffffff;
+    padding: 24px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: 0.5px;
+  }
+  .header p {
+    margin: 6px 0 0 0;
+    font-size: 14px;
+    color: #93c5fd;
+  }
+  .warning-box {
+    background-color: #fef2f2;
+    border-left: 5px solid #ef4444;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #991b1b;
+  }
+  .warning-box strong {
+    font-size: 14px;
+  }
+  .section-title {
+    font-size: 18px;
+    color: #0f172a;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  th {
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-shared { background-color: #dbeafe; color: #1e40af; }
+  .badge-dedicated { background-color: #fef3c7; color: #92400e; }
+  .badge-power { background-color: #fee2e2; color: #991b1b; }
+  .badge-btn { background-color: #dcfce7; color: #166534; }
+
+  .esp32-box {
+    background-color: #0f172a;
+    color: #f8fafc;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+  }
+  .esp32-grid {
+    display: flex;
+    justify-content: space-between;
+  }
+  .esp32-col {
+    width: 48%;
+  }
+  .pin-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px dashed #334155;
+  }
+  .pin-name { color: #38bdf8; font-weight: bold; }
+  .pin-desc { color: #cbd5e1; }
+
+  .footer {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>ESP32 BLUETOOTH JAMMER PINOUT & WIRING GUIDE</h1>
+    <p>Complete Wiring Specifications for Dual NRF24L01 + ILI9341 Touchscreen + Hardware Buttons</p>
+  </div>
+
+  <div class="warning-box">
+    <strong>⚠️ LEGAL & EDUCATIONAL DISCLAIMER</strong><br>
+    This documentation and device design are strictly for educational and testing purposes in controlled laboratory environments. Operating RF signal jamming equipment is illegal in many jurisdictions and can disrupt public safety and emergency communications.
+  </div>
+
+  <div class="section-title">1. ESP32 Pin Allocation Schematic</div>
+  <div class="esp32-box">
+    <div style="text-align:center; font-weight:bold; color:#facc15; margin-bottom:12px;">ESP32 30-PIN DEV BOARD LAYOUT</div>
+    <div class="esp32-grid">
+      <div class="esp32-col">
+        <div class="pin-row"><span>Radio 1 CE</span> <span class="pin-name">GPIO 22</span></div>
+        <div class="pin-row"><span>Radio 2 CE</span> <span class="pin-name">GPIO 16</span></div>
+        <div class="pin-row"><span>Touch T_CS</span> <span class="pin-name">GPIO 27</span></div>
+        <div class="pin-row"><span>TFT Backlight</span> <span class="pin-name">GPIO 32</span></div>
+        <div class="pin-row"><span>TFT Reset</span> <span class="pin-name">GPIO 33</span></div>
+        <div class="pin-row"><span>Physical ON Btn</span> <span class="pin-name">GPIO 12</span></div>
+        <div class="pin-row"><span>Physical OFF Btn</span> <span class="pin-name">GPIO 14</span></div>
+        <div class="pin-row"><span>Power Rail</span> <span class="pin-name">3.3V</span></div>
+      </div>
+      <div class="esp32-col">
+        <div class="pin-row"><span class="pin-name">GPIO 21</span> <span>Radio 1 CSN</span></div>
+        <div class="pin-row"><span class="pin-name">GPIO 15</span> <span>Radio 2 CSN</span></div>
+        <div class="pin-row"><span class="pin-name">GPIO 4</span>  <span>TFT DC / RS</span></div>
+        <div class="pin-row"><span class="pin-name">GPIO 5</span>  <span>TFT CS</span></div>
+        <div class="pin-row"><span class="pin-name">GPIO 18</span> <span>SPI SCK (Clock)</span></div>
+        <div class="pin-row"><span class="pin-name">GPIO 19</span> <span>SPI MISO</span></div>
+        <div class="pin-row"><span class="pin-name">GPIO 23</span> <span>SPI MOSI</span></div>
+        <div class="pin-row"><span class="pin-name">GND</span>     <span>Ground Rail</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">2. Shared Hardware SPI Bus (VSPI)</div>
+  <p style="font-size:13px; color:#475569;">
+    The ESP32 uses a single high-speed Hardware SPI bus (VSPI) shared across Radio 1, Radio 2, the TFT Display, and the Touchscreen controller.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>SPI Bus Signal</th>
+        <th>ESP32 GPIO Pin</th>
+        <th>Connected Modules</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>SCK (Clock)</strong></td>
+        <td><strong>GPIO 18</strong></td>
+        <td>Radio 1, Radio 2, TFT Display (SCK), Touch (T_CLK)</td>
+        <td><span class="badge badge-shared">SHARED SPI</span></td>
+      </tr>
+      <tr>
+        <td><strong>MISO (Master In)</strong></td>
+        <td><strong>GPIO 19</strong></td>
+        <td>Radio 1, Radio 2, TFT Display (SDO), Touch (T_DO)</td>
+        <td><span class="badge badge-shared">SHARED SPI</span></td>
+      </tr>
+      <tr>
+        <td><strong>MOSI (Master Out)</strong></td>
+        <td><strong>GPIO 23</strong></td>
+        <td>Radio 1, Radio 2, TFT Display (SDI), Touch (T_DIN)</td>
+        <td><span class="badge badge-shared">SHARED SPI</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">3. Module Wiring Tables</div>
+
+  <h3>A. Radio #1 — NRF24L01 (Lower Channels 2402–2440 MHz)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>NRF24 #1 Pin</th>
+        <th>ESP32 Pin</th>
+        <th>Function</th>
+        <th>Signal Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>VCC</td><td><strong>3.3V Rail</strong></td><td>Power (+3.3V Only)</td><td><span class="badge badge-power">POWER</span></td></tr>
+      <tr><td>GND</td><td><strong>GND Rail</strong></td><td>Ground</td><td><span class="badge badge-power">GROUND</span></td></tr>
+      <tr><td>CE</td><td><strong>GPIO 22</strong></td><td>Chip Enable</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>CSN</td><td><strong>GPIO 21</strong></td><td>SPI Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>SCK</td><td><strong>GPIO 18</strong></td><td>SPI Clock</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>MOSI</td><td><strong>GPIO 23</strong></td><td>SPI Data In</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>MISO</td><td><strong>GPIO 19</strong></td><td>SPI Data Out</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>B. Radio #2 — NRF24L01 (Upper Channels 2441–2480 MHz)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>NRF24 #2 Pin</th>
+        <th>ESP32 Pin</th>
+        <th>Function</th>
+        <th>Signal Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>VCC</td><td><strong>3.3V Rail</strong></td><td>Power (+3.3V Only)</td><td><span class="badge badge-power">POWER</span></td></tr>
+      <tr><td>GND</td><td><strong>GND Rail</strong></td><td>Ground</td><td><span class="badge badge-power">GROUND</span></td></tr>
+      <tr><td>CE</td><td><strong>GPIO 16</strong></td><td>Chip Enable</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>CSN</td><td><strong>GPIO 15</strong></td><td>SPI Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>SCK</td><td><strong>GPIO 18</strong></td><td>SPI Clock</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>MOSI</td><td><strong>GPIO 23</strong></td><td>SPI Data In</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>MISO</td><td><strong>GPIO 19</strong></td><td>SPI Data Out</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+    </tbody>
+  </table>
+
+  <div style="page-break-before: always;"></div>
+
+  <h3>C. ILI9341 2.8" SPI TFT Touchscreen Display</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Display Pin</th>
+        <th>ESP32 Pin</th>
+        <th>Function</th>
+        <th>Signal Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>VCC</td><td><strong>3.3V / 5V</strong></td><td>Display Power</td><td><span class="badge badge-power">POWER</span></td></tr>
+      <tr><td>GND</td><td><strong>GND Rail</strong></td><td>Ground</td><td><span class="badge badge-power">GROUND</span></td></tr>
+      <tr><td>CS</td><td><strong>GPIO 5</strong></td><td>TFT Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>RESET / RST</td><td><strong>GPIO 33</strong></td><td>TFT Reset</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>DC / RS</td><td><strong>GPIO 4</strong></td><td>Data / Command Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>SDI / MOSI</td><td><strong>GPIO 23</strong></td><td>SPI Data In</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>SCK / CLK</td><td><strong>GPIO 18</strong></td><td>SPI Clock</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>LED / BL</td><td><strong>GPIO 32</strong></td><td>Backlight Control</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>SDO / MISO</td><td><strong>GPIO 19</strong></td><td>SPI Data Out</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>T_CLK</td><td><strong>GPIO 18</strong></td><td>Touch SPI Clock</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>T_CS</td><td><strong>GPIO 27</strong></td><td>Touch Chip Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
+      <tr><td>T_DIN</td><td><strong>GPIO 23</strong></td><td>Touch SPI MOSI</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+      <tr><td>T_DO</td><td><strong>GPIO 19</strong></td><td>Touch SPI MISO</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>D. Physical Hardware Pushbuttons & LED</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Control Device</th>
+        <th>ESP32 Pin</th>
+        <th>Connection Instructions</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>TURN ON Pushbutton</strong></td>
+        <td><strong>GPIO 12</strong></td>
+        <td>One leg to <strong>GPIO 12</strong>, other leg to <strong>GND</strong></td>
+        <td><span class="badge badge-btn">INPUT_PULLUP</span></td>
+      </tr>
+      <tr>
+        <td><strong>TURN OFF Pushbutton</strong></td>
+        <td><strong>GPIO 14</strong></td>
+        <td>One leg to <strong>GPIO 14</strong>, other leg to <strong>GND</strong></td>
+        <td><span class="badge badge-btn">INPUT_PULLUP</span></td>
+      </tr>
+      <tr>
+        <td><strong>BOOT Mode Button</strong></td>
+        <td><strong>GPIO 0</strong></td>
+        <td>Built-in BOOT button on ESP32 board</td>
+        <td><span class="badge badge-btn">INTERNAL</span></td>
+      </tr>
+      <tr>
+        <td><strong>Status LED</strong></td>
+        <td><strong>GPIO 2</strong></td>
+        <td>Built-in LED on ESP32 board</td>
+        <td><span class="badge badge-btn">OUTPUT</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">4. Power & Capacitor Notes</div>
+  <ul style="font-size:13px; color:#334155; line-height:1.6;">
+    <li><strong>Standard PCB Antenna NRF24L01 Modules</strong>: Draw ~12mA each. Can be powered directly from ESP32 3.3V pin without external capacitors.</li>
+    <li><strong>PA+LNA External Antenna Modules</strong>: Draw up to ~115mA peak. Connect a <strong>10µF to 47µF capacitor</strong> across VCC and GND of each NRF24L01 module to prevent brownouts.</li>
+  </ul>
+
+  <div class="footer">
+    ESP32 Bluetooth Jammer System Pinout Document • Generated automatically for CradleGuard 2.3
+  </div>
+
+</body>
+</html>
