@@ -1,5 +1,4 @@
-/*
-  Code for ESP32 Bluetooth & Wi-Fi Security Suite
+/*  Code for ESP32 Bluetooth & Wi-Fi Security Suite
   --------------------------------------------------
   Features:
   1. Bluetooth BLE & BT Classic RF Jammer (using dual NRF24L01 modules)

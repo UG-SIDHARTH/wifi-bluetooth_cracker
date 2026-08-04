@@ -32,16 +32,154 @@ doc.font('Helvetica').fontSize(8.5).text('This device design and documentation a
 
 let y = 175;
 
-// Section 1: Full Breadboard Wiring Diagram
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('1. Full Master Hardware Breadboard Wiring Diagram', 40, y);
+// ─────────────────────────────────────────────────────────────────────────────
+// Section 1: Full Breadboard Wiring Diagram  (full-width, large image)
+// ─────────────────────────────────────────────────────────────────────────────
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold')
+   .text('1. Full Master Hardware Breadboard Wiring Diagram', 40, y);
+y += 4;
+doc.moveTo(40, y + 14).lineTo(555, y + 14).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
 y += 20;
 
 if (fs.existsSync(imagePath)) {
+  // Fit the image as large as possible on the remaining page space
   doc.image(imagePath, 40, y, { width: 515 });
-  y += 280;
+  y += 330;
 }
 
-// Section 2: ESP32 Pin Allocation Box (Moved to Page 2)
+// Component key below image
+doc.fillColor('#334155').fontSize(9).font('Helvetica-Bold').text('Components shown in diagram:', 40, y);
+y += 13;
+
+const compList = [
+  ['ESP32 30-Pin Dev Board',    'Center of breadboard — spans both halves'],
+  ['MCUFRIEND 2.4" TFT Shield', 'Left side — connected via 20-wire ribbon to ESP32'],
+  ['NRF24L01 #1 (PCB Ant.)',    'Right top — CE→GPIO 22, CSN→GPIO 21, SPI shared'],
+  ['NRF24L01 #2 (PCB Ant.)',    'Right bottom — CE→GPIO 16, CSN→GPIO 15, SPI shared'],
+  ['TURN ON Pushbutton',        'Lower breadboard left — GPIO 12 & GND'],
+  ['TURN OFF Pushbutton',       'Lower breadboard right — GPIO 14 & GND'],
+  ['BOOT Button (GPIO 0)',       'Built-in on ESP32 board (no external wiring needed)'],
+  ['Status LED (GPIO 2)',        'Built-in on ESP32 board (no external wiring needed)'],
+];
+doc.fontSize(8).font('Helvetica');
+compList.forEach(([name, desc]) => {
+  doc.fillColor(COLOR_ACCENT).text('• ' + name + ':', 48, y, { continued: true, width: 160 });
+  doc.fillColor(COLOR_TEXT).text('  ' + desc, { width: 340 });
+  y += 12;
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE 2 — Wire-by-Wire Color Legend + Full Connection Table
+// ─────────────────────────────────────────────────────────────────────────────
+doc.addPage();
+y = 40;
+
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold')
+   .text('1B. Breadboard Wire-by-Wire Connection Reference', 40, y);
+y += 4;
+doc.moveTo(40, y + 14).lineTo(555, y + 14).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 22;
+
+// Wire colour legend swatches
+doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('Wire Color Key:', 40, y);
+y += 14;
+
+const wireColors = [
+  ['#dc2626', 'RED',    '3.3V / 5V Power Supply Rail'],
+  ['#1d4ed8', 'BLACK',  'GND Ground Rail'],
+  ['#2563eb', 'BLUE',   'SPI SCK (Clock) — GPIO 18'],
+  ['#7c3aed', 'PURPLE', 'SPI MOSI (Data Out) — GPIO 23'],
+  ['#0891b2', 'CYAN',   'SPI MISO (Data In) — GPIO 19'],
+  ['#d97706', 'ORANGE', 'NRF CE / CSN control lines'],
+  ['#16a34a', 'GREEN',  'TURN ON Button wire — GPIO 12'],
+  ['#ca8a04', 'YELLOW', 'TFT control lines (RS, CS, RST, WR)'],
+  ['#9333ea', 'VIOLET', 'TURN OFF Button wire — GPIO 14'],
+];
+
+wireColors.forEach((w, i) => {
+  const col = i % 3;
+  const row = Math.floor(i / 3);
+  const wx = 40 + col * 175;
+  const wy = y + row * 22;
+  doc.roundedRect(wx, wy, 14, 14, 2).fill(w[0]);
+  doc.fillColor(COLOR_TEXT).fontSize(8).font('Helvetica-Bold')
+     .text(w[1], wx + 18, wy + 2);
+  doc.fillColor('#64748b').fontSize(7.5).font('Helvetica')
+     .text(w[2], wx + 18, wy + 10);
+});
+
+y += Math.ceil(wireColors.length / 3) * 22 + 16;
+
+// Full connection table
+function drawTable(headers, rows, startY, colWidths) {
+  let cy = startY;
+  doc.rect(40, cy, 515, 18).fill('#f1f5f9');
+  doc.fillColor('#334155').fontSize(9).font('Helvetica-Bold');
+  let cx = 45;
+  headers.forEach((h, i) => {
+    doc.text(h, cx, cy + 5, { width: colWidths[i] });
+    cx += colWidths[i];
+  });
+  cy += 18;
+  rows.forEach((row, rowIndex) => {
+    if (rowIndex % 2 === 1) doc.rect(40, cy, 515, 16).fill(COLOR_BG_ALT);
+    doc.fillColor(COLOR_TEXT).fontSize(8.5).font('Helvetica');
+    cx = 45;
+    row.forEach((cell, i) => {
+      if (i === 1) doc.font('Helvetica-Bold').fillColor(COLOR_ACCENT);
+      else doc.font('Helvetica').fillColor(COLOR_TEXT);
+      doc.text(cell, cx, cy + 4, { width: colWidths[i] });
+      cx += colWidths[i];
+    });
+    cy += 16;
+  });
+  return cy;
+}
+
+doc.fillColor(COLOR_PRIMARY).fontSize(11).font('Helvetica-Bold')
+   .text('Complete Breadboard Connection Table — All Wires', 40, y);
+y += 16;
+
+y = drawTable(
+  ['From Component / Pin', 'ESP32 GPIO', 'Wire Color', 'Destination / Rail'],
+  [
+    ['Breadboard +Rail (3.3V)', '3.3V pin',  'RED',    '→ NRF24 #1 VCC, NRF24 #2 VCC'],
+    ['Breadboard −Rail (GND)',  'GND pin',   'BLACK',  '→ NRF24 #1 GND, NRF24 #2 GND, BTN GND legs'],
+    ['TFT Shield 5V/3V3',      '5V / 3.3V', 'RED',    '→ Breadboard power rail'],
+    ['TFT Shield GND',         'GND',        'BLACK',  '→ Breadboard GND rail'],
+    ['SPI Clock (SCK)',         'GPIO 18',   'BLUE',   '→ NRF24 #1 SCK, NRF24 #2 SCK, TFT SD_SCK'],
+    ['SPI MOSI',                'GPIO 23',   'PURPLE', '→ NRF24 #1 MOSI, NRF24 #2 MOSI, TFT SD_DI'],
+    ['SPI MISO',                'GPIO 19',   'CYAN',   '→ NRF24 #1 MISO, NRF24 #2 MISO, TFT SD_DO'],
+    ['NRF24 #1 CE',             'GPIO 22',   'ORANGE', '→ NRF24 #1 CE pin'],
+    ['NRF24 #1 CSN',            'GPIO 21',   'ORANGE', '→ NRF24 #1 CSN pin'],
+    ['NRF24 #2 CE',             'GPIO 16',   'ORANGE', '→ NRF24 #2 CE pin'],
+    ['NRF24 #2 CSN',            'GPIO 15',   'ORANGE', '→ NRF24 #2 CSN pin'],
+    ['TFT LCD_RST',             'GPIO 33',   'YELLOW', '→ TFT Shield LCD_RST pin'],
+    ['TFT LCD_CS',              'GPIO 5',    'YELLOW', '→ TFT Shield LCD_CS pin'],
+    ['TFT LCD_RS (DC)',         'GPIO 4',    'YELLOW', '→ TFT Shield LCD_RS pin'],
+    ['TFT LCD_WR',              'GPIO 2',    'YELLOW', '→ TFT Shield LCD_WR pin'],
+    ['TFT LCD_RD',              '3.3V Rail', 'RED',    '→ Tie HIGH (no data read needed)'],
+    ['TFT LCD_D0',              'GPIO 12',   'BLUE',   '→ TFT Shield D0 (shared w/ TURN ON btn)'],
+    ['TFT LCD_D1',              'GPIO 13',   'BLUE',   '→ TFT Shield D1 (shared w/ SD_SS)'],
+    ['TFT LCD_D2',              'GPIO 26',   'BLUE',   '→ TFT Shield D2'],
+    ['TFT LCD_D3',              'GPIO 25',   'BLUE',   '→ TFT Shield D3'],
+    ['TFT LCD_D4',              'GPIO 17',   'BLUE',   '→ TFT Shield D4'],
+    ['TFT LCD_D5',              'GPIO 27',   'BLUE',   '→ TFT Shield D5'],
+    ['TFT LCD_D6',              'GPIO 14',   'BLUE',   '→ TFT Shield D6 (shared w/ TURN OFF btn)'],
+    ['TFT LCD_D7',              'GPIO 32',   'BLUE',   '→ TFT Shield D7'],
+    ['SD Card SS (CS)',         'GPIO 13',   'YELLOW', '→ TFT Shield SD_SS'],
+    ['TURN ON Pushbutton',      'GPIO 12',   'GREEN',  'Leg 1 → GPIO 12, Leg 2 → GND Rail'],
+    ['TURN OFF Pushbutton',     'GPIO 14',   'VIOLET', 'Leg 1 → GPIO 14, Leg 2 → GND Rail'],
+    ['BOOT Button',             'GPIO 0',    '—',      'Built-in on ESP32 board (no wire needed)'],
+    ['Status LED',              'GPIO 2',    '—',      'Built-in on ESP32 board (no wire needed)'],
+  ],
+  y,
+  [155, 90, 80, 190]
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE 3 — ESP32 Pin Allocation Box
+// ─────────────────────────────────────────────────────────────────────────────
 doc.addPage();
 y = 40;
 
@@ -84,43 +222,13 @@ for (let i = 0; i < leftPins.length; i++) {
   py += 10.5;
 }
 
-// PAGE 2
+// PAGE 4
 doc.addPage();
 y = 40;
 
 // Section 3: Shared SPI Bus Table & Wi-Fi Radio
 doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('3. Hardware Interfaces (VSPI & ESP32 Wi-Fi Radio)', 40, y);
 y += 20;
-
-function drawTable(headers, rows, startY, colWidths) {
-  let cy = startY;
-  // Header
-  doc.rect(40, cy, 515, 18).fill('#f1f5f9');
-  doc.fillColor('#334155').fontSize(9).font('Helvetica-Bold');
-  let cx = 45;
-  headers.forEach((h, i) => {
-    doc.text(h, cx, cy + 5, { width: colWidths[i] });
-    cx += colWidths[i];
-  });
-  cy += 18;
-
-  // Rows
-  rows.forEach((row, rowIndex) => {
-    if (rowIndex % 2 === 1) {
-      doc.rect(40, cy, 515, 16).fill(COLOR_BG_ALT);
-    }
-    doc.fillColor(COLOR_TEXT).fontSize(8.5).font('Helvetica');
-    cx = 45;
-    row.forEach((cell, i) => {
-      if (i === 1) doc.font('Helvetica-Bold').fillColor(COLOR_ACCENT);
-      else doc.font('Helvetica').fillColor(COLOR_TEXT);
-      doc.text(cell, cx, cy + 4, { width: colWidths[i] });
-      cx += colWidths[i];
-    });
-    cy += 16;
-  });
-  return cy;
-}
 
 y = drawTable(
   ['Signal / Interface', 'ESP32 Pin', 'Connected Modules / Mode', 'Type'],
@@ -203,7 +311,7 @@ y = drawTable(
   [100, 120, 160, 135]
 );
 
-// PAGE 3
+// PAGE 5
 doc.addPage();
 y = 40;
 
