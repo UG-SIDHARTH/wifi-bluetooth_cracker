@@ -50,6 +50,14 @@ Connect the modules according to the pinout below:
 
 *Note: Built-in PCB antenna NRF24L01 modules draw only ~12mA each and do NOT require capacitors.*
 
+### C. Physical Pushbuttons & Status LED (Button / LED)
+| Button / LED | ESP32 Pin | Connection Instructions | Type |
+| :--- | :--- | :--- | :--- |
+| **TURN ON Button** | **GPIO 12** | One leg to GPIO 12, other leg to GND | INPUT_PULLUP |
+| **TURN OFF Button** | **GPIO 14** | One leg to GPIO 14, other leg to GND | INPUT_PULLUP |
+| **BOOT Button** | **GPIO 0** | Built-in BOOT pushbutton on ESP32 board | Internal |
+| **Status LED** | **GPIO 2** | Built-in LED on ESP32 board | OUTPUT |
+
 ---
 
 ## 💾 STEP 2: MicroSD Card Setup

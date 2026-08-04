@@ -274,7 +274,14 @@
       <tr><td>LCD_RS</td><td><strong>GPIO 4</strong></td><td>Register / Command Select</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
       <tr><td>LCD_WR</td><td><strong>GPIO 2</strong></td><td>Write Enable</td><td><span class="badge badge-dedicated">DEDICATED</span></td></tr>
       <tr><td>LCD_RD</td><td><strong>3.3V Rail</strong></td><td>Read Enable (Tie to HIGH)</td><td><span class="badge badge-power">POWER</span></td></tr>
-      <tr><td>LCD_D0 - LCD_D7</td><td><strong>GPIO 12, 13, 26, 25, 17, 27, 14, 32</strong></td><td>8-Bit Parallel Data Bus</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D0</td><td><strong>GPIO 12</strong></td><td>Data Bit 0</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D1</td><td><strong>GPIO 13</strong></td><td>Data Bit 1</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D2</td><td><strong>GPIO 26</strong></td><td>Data Bit 2</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D3</td><td><strong>GPIO 25</strong></td><td>Data Bit 3</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D4</td><td><strong>GPIO 17</strong></td><td>Data Bit 4</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D5</td><td><strong>GPIO 27</strong></td><td>Data Bit 5</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D6</td><td><strong>GPIO 14</strong></td><td>Data Bit 6</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
+      <tr><td>LCD_D7</td><td><strong>GPIO 32</strong></td><td>Data Bit 7</td><td><span class="badge badge-dedicated">PARALLEL BUS</span></td></tr>
       <tr><td>SD_SS (CS)</td><td><strong>GPIO 13</strong></td><td>SD Card Chip Select</td><td><span class="badge badge-dedicated">SPI CS</span></td></tr>
       <tr><td>SD_DI (MOSI)</td><td><strong>GPIO 23</strong></td><td>SD SPI Data In</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
       <tr><td>SD_DO (MISO)</td><td><strong>GPIO 19</strong></td><td>SD SPI Data Out</td><td><span class="badge badge-shared">SHARED SPI</span></td></tr>
@@ -282,11 +289,11 @@
     </tbody>
   </table>
 
-  <h3>D. Physical Hardware Pushbuttons & LED</h3>
+  <h3>D. Physical Hardware Pushbuttons & LED (Button / LED)</h3>
   <table>
     <thead>
       <tr>
-        <th>Control Device</th>
+        <th>Button / LED</th>
         <th>ESP32 Pin</th>
         <th>Connection Instructions</th>
         <th>Type</th>
@@ -294,19 +301,19 @@
     </thead>
     <tbody>
       <tr>
-        <td><strong>TURN ON / RUN Pushbutton</strong></td>
+        <td><strong>TURN ON Button</strong></td>
         <td><strong>GPIO 12</strong></td>
         <td>One leg to <strong>GPIO 12</strong>, other leg to <strong>GND</strong></td>
         <td><span class="badge badge-btn">INPUT_PULLUP</span></td>
       </tr>
       <tr>
-        <td><strong>TURN OFF / IDLE Pushbutton</strong></td>
+        <td><strong>TURN OFF Button</strong></td>
         <td><strong>GPIO 14</strong></td>
         <td>One leg to <strong>GPIO 14</strong>, other leg to <strong>GND</strong></td>
         <td><span class="badge badge-btn">INPUT_PULLUP</span></td>
       </tr>
       <tr>
-        <td><strong>BOOT Mode Switcher</strong></td>
+        <td><strong>BOOT Button</strong></td>
         <td><strong>GPIO 0</strong></td>
         <td>Built-in BOOT button on ESP32 board</td>
         <td><span class="badge badge-btn">INTERNAL</span></td>
