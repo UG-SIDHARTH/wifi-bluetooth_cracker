@@ -74,6 +74,17 @@ enum SystemMode {
   MODE_WEB_PORTAL = 5
 };
 
+// --- Main Menu & Sub-Menu Screen State ---
+enum ScreenState {
+  SCREEN_MAIN_MENU = 0,   // Top-level 3-option menu
+  SCREEN_WIFI_SUBMENU,    // Wi-Fi Scanner sub-menu
+  SCREEN_WIFI_SELECT,     // Select a scanned Wi-Fi network
+  SCREEN_WIFI_CRACK,      // Find password / dictionary audit
+  SCREEN_JAMMER,          // Wi-Fi + BT Signal Jammer
+  SCREEN_RESET            // Reset confirmation
+};
+
+ScreenState currentScreen = SCREEN_MAIN_MENU;
 SystemMode currentMode = MODE_BLE;
 
 // ----------------------------------------------------
@@ -169,6 +180,15 @@ void updateDisplayUI(bool forceRedraw = false);
 void checkTouch();
 void checkPhysicalButtons();
 
+// Menu Screen Functions
+void drawMainMenu();
+void drawWifiSubMenu();
+void drawWifiSelectScreen();
+void drawWifiCrackScreen();
+void drawJammerScreen();
+void drawResetScreen();
+void setScreen(ScreenState s);
+
 // Wi-Fi Functions
 void scanWiFiNetworks();
 void startWiFiSniffer();
@@ -222,10 +242,10 @@ void setup() {
 
   setMode(MODE_BLE);
 
-  drawStaticUI();
-  updateDisplayUI(true);
+  // Show main menu on startup
+  setScreen(SCREEN_MAIN_MENU);
 
-  Serial.println("Setup Complete. Use BOOT/Touch to cycle modes, GPIO 12 (ON), GPIO 14 (OFF).\n");
+  Serial.println("Setup Complete. Main menu displayed. GPIO 12 (ON), GPIO 14 (OFF), GPIO 0 (BOOT/BACK).\n");
 }
 
 // ----------------------------------------------------
@@ -761,6 +781,344 @@ void initDisplay() {
   runStartupAnimation();
 }
 
+// ====================================================
+// SCREEN SWITCHER
+// ====================================================
+void setScreen(ScreenState s) {
+  currentScreen = s;
+  actionActive = false;
+  digitalWrite(LED_PIN, LOW);
+  stopWiFiSniffer();
+  WiFi.softAPdisconnect(true);
+  WiFi.mode(WIFI_OFF);
+
+  switch (s) {
+    case SCREEN_MAIN_MENU:     drawMainMenu();      break;
+    case SCREEN_WIFI_SUBMENU:  drawWifiSubMenu();   break;
+    case SCREEN_WIFI_SELECT:   drawWifiSelectScreen(); break;
+    case SCREEN_WIFI_CRACK:    drawWifiCrackScreen(); break;
+    case SCREEN_JAMMER:        drawJammerScreen();  break;
+    case SCREEN_RESET:         drawResetScreen();   break;
+    default:                   drawMainMenu();      break;
+  }
+}
+
+// -----------------------------------------------------------
+// Helper: draw top header bar with optional back arrow
+// -----------------------------------------------------------
+void drawHeader(const char* title, bool showBack) {
+  tft.fillRect(0, 0, 320, 35, COLOR_HEADER);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  if (showBack) {
+    // "<" back indicator on the left
+    tft.setCursor(6, 8);
+    tft.print("<");
+    tft.setCursor(28, 8);
+  } else {
+    tft.setCursor(8, 8);
+  }
+  tft.print(title);
+}
+
+// -----------------------------------------------------------
+// 1. MAIN MENU (3 big option buttons)
+// -----------------------------------------------------------
+void drawMainMenu() {
+  tft.fillScreen(COLOR_BG);
+  drawHeader("CRADLEGUARD 3.0", false);
+
+  // -- Option 1: WIFI SCANNER (green) --
+  tft.fillRoundRect(10, 45, 300, 54, 8, 0x07C0);   // deep green
+  tft.drawRoundRect(10, 45, 300, 54, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(22, 53);
+  tft.print("1. WIFI SCANNER");
+  tft.setTextSize(1);
+  tft.setTextColor(0xD7FF);
+  tft.setCursor(22, 76);
+  tft.print("Select network / Find password");
+
+  // -- Option 2: WIFI+BT JAMMER (red/orange) --
+  tft.fillRoundRect(10, 108, 300, 54, 8, 0xA000);  // dark red
+  tft.drawRoundRect(10, 108, 300, 54, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(22, 116);
+  tft.print("2. WIFI+BT JAMMER");
+  tft.setTextSize(1);
+  tft.setTextColor(0xFD20);
+  tft.setCursor(22, 139);
+  tft.print("2.4GHz BLE, BT Classic & Wi-Fi");
+
+  // -- Option 3: RESET (grey/blue) --
+  tft.fillRoundRect(10, 171, 300, 54, 8, 0x2945);  // slate
+  tft.drawRoundRect(10, 171, 300, 54, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(22, 179);
+  tft.print("3. RESET");
+  tft.setTextSize(1);
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(22, 202);
+  tft.print("Restart device to initial state");
+}
+
+// -----------------------------------------------------------
+// 2. WIFI SCANNER SUB-MENU
+// -----------------------------------------------------------
+void drawWifiSubMenu() {
+  tft.fillScreen(COLOR_BG);
+  drawHeader("WIFI SCANNER", true);
+
+  // Sub-option 1.1: SELECT WIFI
+  tft.fillRoundRect(10, 50, 300, 70, 8, 0x03EF);   // teal
+  tft.drawRoundRect(10, 50, 300, 70, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(22, 60);
+  tft.print("1.1 SELECT WIFI");
+  tft.setTextSize(1);
+  tft.setTextColor(0xD7FF);
+  tft.setCursor(22, 84);
+  tft.print("Scan & choose a nearby network");
+
+  // Sub-option 1.2: FIND PASSWORD
+  tft.fillRoundRect(10, 132, 300, 70, 8, 0x8010);  // violet
+  tft.drawRoundRect(10, 132, 300, 70, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(22, 142);
+  tft.print("1.2 FIND PASSWORD");
+  tft.setTextSize(1);
+  tft.setTextColor(0xFFB2);
+  tft.setCursor(22, 166);
+  tft.print("Dictionary audit on selected AP");
+
+  // Back hint
+  tft.setTextSize(1);
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(10, 218);
+  tft.print("BOOT/tap header to go back");
+}
+
+// -----------------------------------------------------------
+// 3. SELECT WIFI SCREEN
+// -----------------------------------------------------------
+void drawWifiSelectScreen() {
+  tft.fillScreen(COLOR_BG);
+  drawHeader("SELECT WIFI", true);
+
+  // Trigger scan immediately
+  setMode(MODE_WIFI_SCAN);
+  scanWiFiNetworks();
+
+  tft.fillRect(0, 35, 320, 2, COLOR_ACCENT);
+
+  if (wifiNetworkCount == 0) {
+    tft.setTextColor(COLOR_YELLOW);
+    tft.setTextSize(1);
+    tft.setCursor(30, 110);
+    tft.print("No networks found. Tap SCAN.");
+  } else {
+    // List up to 8 networks
+    int shown = min(wifiNetworkCount, 8);
+    for (int i = 0; i < shown; i++) {
+      uint16_t rowColor = (i == selectedTargetIndex) ? COLOR_ACCENT : COLOR_CARD;
+      tft.fillRoundRect(8, 40 + i * 24, 304, 22, 3, rowColor);
+      tft.setTextColor((i == selectedTargetIndex) ? COLOR_BG : COLOR_TEXT);
+      tft.setTextSize(1);
+      tft.setCursor(14, 46 + i * 24);
+      String label = String(i + 1) + ". " + scannedNetworks[i].ssid.substring(0, 20);
+      label += "  " + String(scannedNetworks[i].rssi) + "dBm";
+      tft.print(label);
+    }
+  }
+
+  // SCAN button at bottom
+  tft.fillRoundRect(10, 208, 140, 26, 5, COLOR_GREEN);
+  tft.setTextColor(COLOR_BG);
+  tft.setTextSize(1);
+  tft.setCursor(28, 215);
+  tft.print(">> SCAN");
+
+  // CONFIRM button at bottom right
+  tft.fillRoundRect(166, 208, 144, 26, 5, COLOR_ACCENT);
+  tft.setTextColor(COLOR_BG);
+  tft.setCursor(184, 215);
+  tft.print("CONFIRM CHOICE");
+}
+
+// -----------------------------------------------------------
+// 4. FIND PASSWORD / CRACK SCREEN
+// -----------------------------------------------------------
+void drawWifiCrackScreen() {
+  tft.fillScreen(COLOR_BG);
+  drawHeader("FIND PASSWORD", true);
+
+  tft.fillRect(0, 35, 320, 2, COLOR_ACCENT);
+
+  tft.setTextSize(1);
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(14, 44);
+  tft.print("Target AP:");
+  tft.setTextColor(COLOR_ACCENT);
+  tft.setTextSize(1);
+  tft.setCursor(75, 44);
+  if (wifiNetworkCount > 0) {
+    tft.print(scannedNetworks[selectedTargetIndex].ssid.substring(0, 22));
+  } else {
+    tft.print("(none selected)");
+  }
+
+  tft.drawRoundRect(8, 58, 304, 60, 6, COLOR_CARD);
+  tft.fillRoundRect(9, 59, 302, 58, 6, COLOR_CARD);
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setTextSize(1);
+  tft.setCursor(16, 66);
+  tft.print("Status:");
+  tft.setTextColor(COLOR_GREEN);
+  tft.setCursor(16, 80);
+  tft.print(crackStatusMsg.substring(0, 35));
+
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(16, 96);
+  tft.print("Dictionary: SD /wordlist.txt  |  Internal: 10 keys");
+
+  // Instructions
+  tft.setTextColor(COLOR_YELLOW);
+  tft.setTextSize(1);
+  tft.setCursor(14, 128);
+  tft.print("Tap START to run audit engine.");
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(14, 143);
+  tft.print("Uses wordlist to test passphrases.");
+  tft.setCursor(14, 155);
+  tft.print("Results saved to SD /cracked_keys.txt");
+
+  // START button
+  tft.fillRoundRect(10, 174, 300, 36, 7, 0x8010);
+  tft.drawRoundRect(10, 174, 300, 36, 7, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(80, 183);
+  tft.print(">> START AUDIT");
+
+  // Back hint
+  tft.setTextSize(1);
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(10, 220);
+  tft.print("BOOT button / tap header to go back");
+}
+
+// -----------------------------------------------------------
+// 5. WIFI+BT JAMMER SCREEN
+// -----------------------------------------------------------
+void drawJammerScreen() {
+  tft.fillScreen(COLOR_BG);
+  drawHeader("WIFI+BT JAMMER", true);
+
+  tft.fillRect(0, 35, 320, 2, COLOR_RED);
+
+  // Warning box
+  tft.fillRoundRect(8, 42, 304, 28, 5, 0x5000);
+  tft.setTextColor(COLOR_YELLOW);
+  tft.setTextSize(1);
+  tft.setCursor(16, 50);
+  tft.print("! FOR AUTHORIZED/LAB USE ONLY !");
+
+  // Status box
+  tft.drawRoundRect(8, 78, 304, 56, 6, COLOR_CARD);
+  tft.fillRoundRect(9, 79, 302, 54, 6, COLOR_CARD);
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setTextSize(1);
+  tft.setCursor(16, 87);
+  tft.print("MODE:");
+  tft.setTextColor(actionActive ? COLOR_RED : COLOR_GREEN);
+  tft.setCursor(55, 87);
+  tft.print(actionActive ? "ACTIVE - JAMMING..." : "IDLE");
+
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(16, 103);
+  tft.print("Total RF hops transmitted:");
+  tft.setTextColor(COLOR_ACCENT);
+  tft.setCursor(16, 116);
+  tft.print(String(hopCount));
+
+  // JAMMER ON button
+  tft.fillRoundRect(10, 143, 140, 38, 7, COLOR_GREEN);
+  tft.drawRoundRect(10, 143, 140, 38, 7, COLOR_TEXT);
+  tft.setTextColor(COLOR_BG);
+  tft.setTextSize(2);
+  tft.setCursor(22, 153);
+  tft.print("JAMMER ON");
+
+  // JAMMER OFF button
+  tft.fillRoundRect(166, 143, 144, 38, 7, COLOR_RED);
+  tft.drawRoundRect(166, 143, 144, 38, 7, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(176, 153);
+  tft.print("JAMMER OFF");
+
+  // Coverage label
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setTextSize(1);
+  tft.setCursor(10, 192);
+  tft.print("NRF24 Radio 1: 2402-2440 MHz  (BLE ch 0-38)");
+  tft.setCursor(10, 204);
+  tft.print("NRF24 Radio 2: 2441-2480 MHz  (BLE ch 39-79)");
+
+  // Back hint
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setCursor(10, 220);
+  tft.print("BOOT / tap header to go back to menu");
+}
+
+// -----------------------------------------------------------
+// 6. RESET SCREEN
+// -----------------------------------------------------------
+void drawResetScreen() {
+  tft.fillScreen(COLOR_BG);
+  drawHeader("RESET DEVICE", true);
+
+  tft.fillRect(0, 35, 320, 2, COLOR_RED);
+
+  tft.setTextColor(COLOR_YELLOW);
+  tft.setTextSize(2);
+  tft.setCursor(40, 65);
+  tft.print("CONFIRM RESET?");
+
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setTextSize(1);
+  tft.setCursor(20, 95);
+  tft.print("This will restart the ESP32 device.");
+  tft.setCursor(20, 110);
+  tft.print("All running scans will be stopped.");
+
+  // YES button
+  tft.fillRoundRect(20, 140, 120, 44, 8, COLOR_RED);
+  tft.drawRoundRect(20, 140, 120, 44, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_TEXT);
+  tft.setTextSize(2);
+  tft.setCursor(44, 153);
+  tft.print("YES");
+
+  // NO button
+  tft.fillRoundRect(180, 140, 120, 44, 8, COLOR_GREEN);
+  tft.drawRoundRect(180, 140, 120, 44, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_BG);
+  tft.setTextSize(2);
+  tft.setCursor(212, 153);
+  tft.print("NO");
+
+  tft.setTextColor(COLOR_TEXT_MUTED);
+  tft.setTextSize(1);
+  tft.setCursor(10, 220);
+  tft.print("NO or BOOT to cancel");
+}
+
 void drawStaticUI() {
   tft.fillScreen(COLOR_BG);
 
@@ -776,9 +1134,6 @@ void drawStaticUI() {
   tft.fillRoundRect(11, 43, 298, 103, 8, COLOR_CARD);
 
   // Main Action Buttons
-  // Button 1: [ TURN ON / RUN ] (X=15, Y=158, W=135, H=36)
-  // Button 2: [ TURN OFF / IDLE ] (X=165, Y=158, W=135, H=36)
-  // Button 3: [ MODE SELECTOR ] (X=15, Y=200, W=285, H=32)
   tft.fillRoundRect(15, 158, 135, 36, 6, COLOR_GREEN);
   tft.drawRoundRect(15, 158, 135, 36, 6, COLOR_TEXT);
   tft.setTextColor(COLOR_TEXT);
@@ -795,62 +1150,23 @@ void drawStaticUI() {
 }
 
 void updateDisplayUI(bool forceRedraw) {
-  static SystemMode lastDisplayedMode = (SystemMode)-1;
-  static bool lastActionState = false;
-
-  // Redraw Mode Button & Header Info
-  if (forceRedraw || currentMode != lastDisplayedMode) {
-    lastDisplayedMode = currentMode;
-
-    tft.fillRect(15, 48, 290, 92, COLOR_CARD);
-    tft.setTextSize(1);
-    tft.setTextColor(COLOR_TEXT_MUTED);
-
-    tft.setCursor(20, 52);
-    tft.print("MODE: ");
-    tft.setTextColor(COLOR_ACCENT);
-    tft.setTextSize(2);
-    tft.print(getModeName(currentMode));
-
-    tft.setTextSize(1);
-    tft.setTextColor(COLOR_TEXT_MUTED);
-    tft.setCursor(20, 75);
-
-    if (currentMode == MODE_WIFI_SCAN) {
-      tft.printf("Scanned APs: %d  Selected: %d", wifiNetworkCount, selectedTargetIndex);
-      if (wifiNetworkCount > 0) {
-        tft.setCursor(20, 92);
-        tft.setTextColor(COLOR_TEXT);
-        tft.print("Target: " + scannedNetworks[selectedTargetIndex].ssid.substring(0, 18));
-        tft.setCursor(20, 108);
-        tft.printf("Ch:%d RSSI:%d %s", scannedNetworks[selectedTargetIndex].channel, scannedNetworks[selectedTargetIndex].rssi, getAuthTypeName(scannedNetworks[selectedTargetIndex].authmode).c_str());
-      }
-    } else if (currentMode == MODE_WIFI_HANDSHAKE) {
-      tft.printf("EAPOL Handshakes: %d  PMKIDs: %d", eapolCount, pmkidCount);
-      tft.setCursor(20, 95);
-      tft.setTextColor(COLOR_YELLOW);
-      tft.print(actionActive ? "Injecting Deauth Frames..." : "Sniffing Promiscuous Mode");
-    } else if (currentMode == MODE_WIFI_CRACK) {
-      tft.print("Embedded Password Audit Engine");
-      tft.setCursor(20, 95);
-      tft.setTextColor(COLOR_GREEN);
-      tft.print(crackStatusMsg.substring(0, 28));
-    } else if (currentMode == MODE_WEB_PORTAL) {
-      tft.print("SoftAP: ESP32-Security-Tool");
-      tft.setCursor(20, 95);
+  // Only used in legacy JAMMER screen now
+  if (currentScreen == SCREEN_JAMMER) {
+    static unsigned long lastJamUITime = 0;
+    if (forceRedraw || millis() - lastJamUITime > 500) {
+      lastJamUITime = millis();
+      // Refresh hop counter
+      tft.fillRect(16, 116, 180, 12, COLOR_CARD);
       tft.setTextColor(COLOR_ACCENT);
-      tft.print("Web URL: http://192.168.4.1");
-    } else {
-      tft.printf("Total Hops / Transmits: %lu", hopCount);
+      tft.setTextSize(1);
+      tft.setCursor(16, 116);
+      tft.print(String(hopCount));
+      // Refresh status
+      tft.fillRect(55, 87, 200, 12, COLOR_CARD);
+      tft.setTextColor(actionActive ? COLOR_RED : COLOR_GREEN);
+      tft.setCursor(55, 87);
+      tft.print(actionActive ? "ACTIVE - JAMMING..." : "IDLE             ");
     }
-
-    // Redraw Mode Selection Button
-    tft.fillRoundRect(15, 200, 285, 32, 6, COLOR_HEADER);
-    tft.drawRoundRect(15, 200, 285, 32, 6, COLOR_TEXT);
-    tft.setTextColor(COLOR_TEXT);
-    tft.setTextSize(1);
-    tft.setCursor(30, 212);
-    tft.print("MODE: " + getModeName(currentMode) + " (TAP TO SWITCH)");
   }
 }
 
@@ -866,36 +1182,153 @@ void checkTouch() {
   digitalWrite(XM, HIGH);
 
   if (p.z < 10 || p.z > 1000) return;
-  if (millis() - lastTouchTime < 300) return;
+  if (millis() - lastTouchTime < 350) return;
 
   lastTouchTime = millis();
 
   int touchX = map(p.y, 150, 920, 0, 320);
   int touchY = map(p.x, 120, 900, 0, 240);
 
-  // Button 1: [ TURN ON / RUN ] (X: 15-150, Y: 158-194)
-  if (touchX >= 15 && touchX <= 150 && touchY >= 158 && touchY <= 194) {
-    actionActive = true;
-    digitalWrite(LED_PIN, HIGH);
-    if (currentMode == MODE_WIFI_SCAN) {
-      scanWiFiNetworks();
-    } else if (currentMode == MODE_WIFI_CRACK) {
-      runDictionaryCrack();
+  // =============================================
+  // MAIN MENU  (3 big option rows)
+  // =============================================
+  if (currentScreen == SCREEN_MAIN_MENU) {
+    // Option 1 — WIFI SCANNER  (Y: 45-99)
+    if (touchY >= 45 && touchY <= 99) {
+      setScreen(SCREEN_WIFI_SUBMENU);
     }
-    updateDisplayUI(true);
+    // Option 2 — WIFI+BT JAMMER  (Y: 108-162)
+    else if (touchY >= 108 && touchY <= 162) {
+      setMode(MODE_BLE);   // start in BLE jammer mode
+      setScreen(SCREEN_JAMMER);
+    }
+    // Option 3 — RESET  (Y: 171-225)
+    else if (touchY >= 171 && touchY <= 225) {
+      setScreen(SCREEN_RESET);
+    }
+    return;
   }
 
-  // Button 2: [ TURN OFF / IDLE ] (X: 165-300, Y: 158-194)
-  if (touchX >= 165 && touchX <= 300 && touchY >= 158 && touchY <= 194) {
-    actionActive = false;
-    digitalWrite(LED_PIN, LOW);
-    updateDisplayUI(true);
+  // =============================================
+  // WIFI SCANNER SUB-MENU (two sub-options)
+  // =============================================
+  if (currentScreen == SCREEN_WIFI_SUBMENU) {
+    // Back arrow / header  (Y: 0-35)
+    if (touchY <= 35) {
+      setScreen(SCREEN_MAIN_MENU);
+      return;
+    }
+    // Sub-option 1.1 — SELECT WIFI  (Y: 50-120)
+    if (touchY >= 50 && touchY <= 120) {
+      setScreen(SCREEN_WIFI_SELECT);
+    }
+    // Sub-option 1.2 — FIND PASSWORD  (Y: 132-202)
+    else if (touchY >= 132 && touchY <= 202) {
+      setMode(MODE_WIFI_CRACK);
+      setScreen(SCREEN_WIFI_CRACK);
+    }
+    return;
   }
 
-  // Button 3: [ MODE TOGGLE ] (X: 15-300, Y: 200-232)
-  if (touchX >= 15 && touchX <= 300 && touchY >= 200 && touchY <= 232) {
-    SystemMode nextMode = (SystemMode)((currentMode + 1) % 6);
-    setMode(nextMode);
+  // =============================================
+  // SELECT WIFI SCREEN
+  // =============================================
+  if (currentScreen == SCREEN_WIFI_SELECT) {
+    // Back header
+    if (touchY <= 35) {
+      setScreen(SCREEN_WIFI_SUBMENU);
+      return;
+    }
+    // Network row taps  (rows at Y: 40 + i*24, height 22)
+    int shown = min(wifiNetworkCount, 8);
+    for (int i = 0; i < shown; i++) {
+      if (touchY >= 40 + i * 24 && touchY < 62 + i * 24) {
+        selectedTargetIndex = i;
+        drawWifiSelectScreen(); // re-draw to highlight selection
+        return;
+      }
+    }
+    // SCAN button  (X: 10-150, Y: 208-234)
+    if (touchX >= 10 && touchX <= 150 && touchY >= 208 && touchY <= 234) {
+      setMode(MODE_WIFI_SCAN);
+      scanWiFiNetworks();
+      drawWifiSelectScreen();
+    }
+    // CONFIRM button  (X: 166-310, Y: 208-234)
+    if (touchX >= 166 && touchX <= 310 && touchY >= 208 && touchY <= 234) {
+      setScreen(SCREEN_WIFI_SUBMENU);
+    }
+    return;
+  }
+
+  // =============================================
+  // FIND PASSWORD / CRACK SCREEN
+  // =============================================
+  if (currentScreen == SCREEN_WIFI_CRACK) {
+    // Back header
+    if (touchY <= 35) {
+      setScreen(SCREEN_WIFI_SUBMENU);
+      return;
+    }
+    // START AUDIT button  (Y: 174-210)
+    if (touchY >= 174 && touchY <= 210) {
+      setMode(MODE_WIFI_CRACK);
+      runDictionaryCrack();
+      drawWifiCrackScreen(); // refresh result
+    }
+    return;
+  }
+
+  // =============================================
+  // JAMMER SCREEN
+  // =============================================
+  if (currentScreen == SCREEN_JAMMER) {
+    // Back header
+    if (touchY <= 35) {
+      actionActive = false;
+      digitalWrite(LED_PIN, LOW);
+      setScreen(SCREEN_MAIN_MENU);
+      return;
+    }
+    // JAMMER ON  (X: 10-150, Y: 143-181)
+    if (touchX >= 10 && touchX <= 150 && touchY >= 143 && touchY <= 181) {
+      actionActive = true;
+      digitalWrite(LED_PIN, HIGH);
+      updateDisplayUI(true);
+    }
+    // JAMMER OFF  (X: 166-310, Y: 143-181)
+    if (touchX >= 166 && touchX <= 310 && touchY >= 143 && touchY <= 181) {
+      actionActive = false;
+      digitalWrite(LED_PIN, LOW);
+      updateDisplayUI(true);
+    }
+    return;
+  }
+
+  // =============================================
+  // RESET SCREEN
+  // =============================================
+  if (currentScreen == SCREEN_RESET) {
+    // Back header
+    if (touchY <= 35) {
+      setScreen(SCREEN_MAIN_MENU);
+      return;
+    }
+    // YES — reset  (X: 20-140, Y: 140-184)
+    if (touchX >= 20 && touchX <= 140 && touchY >= 140 && touchY <= 184) {
+      tft.fillScreen(COLOR_BG);
+      tft.setTextColor(COLOR_RED);
+      tft.setTextSize(2);
+      tft.setCursor(60, 100);
+      tft.print("RESTARTING...");
+      delay(1500);
+      ESP.restart();
+    }
+    // NO — cancel  (X: 180-300, Y: 140-184)
+    if (touchX >= 180 && touchX <= 300 && touchY >= 140 && touchY <= 184) {
+      setScreen(SCREEN_MAIN_MENU);
+    }
+    return;
   }
 }
 
@@ -904,26 +1337,47 @@ void checkPhysicalButtons() {
   bool offState  = digitalRead(BUTTON_OFF_PIN);
   bool bootState = digitalRead(BUTTON_BOOT_PIN);
 
+  // TURN ON button
   if (onState == LOW && lastOnState == HIGH) {
-    actionActive = true;
-    digitalWrite(LED_PIN, HIGH);
-    if (currentMode == MODE_WIFI_SCAN) scanWiFiNetworks();
-    else if (currentMode == MODE_WIFI_CRACK) runDictionaryCrack();
-    updateDisplayUI(true);
+    if (currentScreen == SCREEN_JAMMER) {
+      actionActive = true;
+      digitalWrite(LED_PIN, HIGH);
+      updateDisplayUI(true);
+    } else if (currentScreen == SCREEN_WIFI_CRACK) {
+      runDictionaryCrack();
+      drawWifiCrackScreen();
+    } else if (currentScreen == SCREEN_WIFI_SELECT) {
+      setMode(MODE_WIFI_SCAN);
+      scanWiFiNetworks();
+      drawWifiSelectScreen();
+    }
     delay(150);
   }
 
+  // TURN OFF button
   if (offState == LOW && lastOffState == HIGH) {
     actionActive = false;
     digitalWrite(LED_PIN, LOW);
-    updateDisplayUI(true);
+    if (currentScreen == SCREEN_JAMMER) updateDisplayUI(true);
     delay(150);
   }
 
+  // BOOT button — navigate BACK / return to main menu
   if (bootState == LOW && lastBootState == HIGH) {
-    SystemMode nextMode = (SystemMode)((currentMode + 1) % 6);
-    setMode(nextMode);
-    delay(150);
+    switch (currentScreen) {
+      case SCREEN_MAIN_MENU:    break;  // already at top
+      case SCREEN_WIFI_SUBMENU: setScreen(SCREEN_MAIN_MENU);    break;
+      case SCREEN_WIFI_SELECT:  setScreen(SCREEN_WIFI_SUBMENU); break;
+      case SCREEN_WIFI_CRACK:   setScreen(SCREEN_WIFI_SUBMENU); break;
+      case SCREEN_JAMMER:
+        actionActive = false;
+        digitalWrite(LED_PIN, LOW);
+        setScreen(SCREEN_MAIN_MENU);
+        break;
+      case SCREEN_RESET:        setScreen(SCREEN_MAIN_MENU);    break;
+      default:                  setScreen(SCREEN_MAIN_MENU);    break;
+    }
+    delay(200);
   }
 
   lastOnState   = onState;
