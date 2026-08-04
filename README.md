@@ -29,12 +29,23 @@ DO NOT use signal jamming, packet injection, or network auditing on public, emer
 
 ---
 
-## 💾 SD Card Information
+## 💾 SD Card Information & File Setup
 
-> [!NOTE]
-> **NO SD CARD REQUIRED!**
-> 
-> Although standard ILI9341 display modules include a physical SD card slot on the back of the PCB, **this firmware does not require an SD card**. All UI graphics, fonts, web pages, and scanning logic are stored directly inside the ESP32's internal flash memory. Captured handshakes and hashes can be downloaded live over the Web Portal (`http://192.168.4.1`) or copied from the Serial Monitor (`115200` baud). You can leave the SD card slot completely empty.
+You can insert a MicroSD card into the slot on the back of your 2.4" TFT Display Shield (connected to **GPIO 13** / `SD_CS`).
+
+### 📄 Optional SD Card Files:
+
+1. **`wordlist.txt`** *(Root directory of SD card)*:
+   - Create a text file named `wordlist.txt` on your MicroSD card and add custom passphrases (one password per line).
+   - When present, the ESP32 automatically reads passphrases directly from `SD:/wordlist.txt` during audit mode instead of using the 10 built-in default passphrases.
+
+2. **`cracked_keys.txt`** *(Auto-created by ESP32)*:
+   - The device automatically logs successful audit matches to `SD:/cracked_keys.txt` in the format:
+     ```text
+     SSID: NetworkName | Key: Passphrase123
+     ```
+
+*Note: If no SD card is inserted, the device falls back gracefully to internal flash memory.*
 
 ---
 

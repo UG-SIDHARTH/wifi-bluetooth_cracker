@@ -193,7 +193,11 @@ y = drawTable(
     ['LCD_D4', 'GPIO 17', 'Data Bit 4', '8-Bit Parallel'],
     ['LCD_D5', 'GPIO 27', 'Data Bit 5', '8-Bit Parallel'],
     ['LCD_D6', 'GPIO 14', 'Data Bit 6', '8-Bit Parallel'],
-    ['LCD_D7', 'GPIO 32', 'Data Bit 7', '8-Bit Parallel']
+    ['LCD_D7', 'GPIO 32', 'Data Bit 7', '8-Bit Parallel'],
+    ['SD_SS (CS)', 'GPIO 13', 'SD Card Chip Select', 'SPI CS'],
+    ['SD_DI (MOSI)', 'GPIO 23', 'SD SPI Data In', 'Shared SPI'],
+    ['SD_DO (MISO)', 'GPIO 19', 'SD SPI Data Out', 'Shared SPI'],
+    ['SD_SCK (SCK)', 'GPIO 18', 'SD SPI Clock', 'Shared SPI']
   ],
   y,
   [100, 120, 160, 135]
@@ -226,9 +230,9 @@ doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('7. Power 
 y += 18;
 
 doc.fillColor(COLOR_TEXT).fontSize(9.5).font('Helvetica');
-doc.text('1. Built-in PCB Antenna Modules: Draw ~12mA each. Can be powered directly from ESP32 3.3V pin without capacitors.', 50, y);
+doc.text('1. Built-in PCB Antenna Modules: Draw ~12mA each. NO CAPACITORS REQUIRED! Power directly from ESP32 3.3V pin.', 50, y);
 y += 16;
-doc.text('2. High-Power PA+LNA Modules: Draw ~115mA peak each. Add a 10uF-47uF capacitor across VCC & GND of each module to prevent brownouts.', 50, y);
+doc.text('2. High-Power PA+LNA Modules: Draw ~115mA peak each. Requires 10uF-47uF capacitors across VCC & GND to buffer current spikes.', 50, y);
 y += 25;
 
 doc.fontSize(8.5).fillColor('#64748b').text('Document generated automatically for CradleGuard 3.0 ESP32 Security Suite.', 40, 780, { align: 'center', width: 515 });

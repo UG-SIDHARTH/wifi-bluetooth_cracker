@@ -27,6 +27,11 @@
 #include <esp_event.h>
 #include <WebServer.h>
 
+// SD Card Libraries
+#include <SD.h>
+#include <FS.h>
+#define SD_CS_PIN 13  // SD_CS pin on 2.4" TFT Shield (connected to GPIO 13)
+
 // ----------------------------------------------------
 // Pin Definitions
 // ----------------------------------------------------
@@ -197,6 +202,17 @@ void setup() {
   for (int i = 0; i < 79; i++) bluetooth_channels[i] = i + 2;
 
   initDisplay();
+
+  // Initialize SD Card Module
+  bool sd_ok = SD.begin(SD_CS_PIN);
+  if (sd_ok) {
+    Serial.println("SD Card initialized successfully!");
+    if (SD.exists("/wordlist.txt")) {
+      Serial.println("Found custom /wordlist.txt on SD card.");
+    }
+  } else {
+    Serial.println("No SD Card detected (or using internal flash memory fallback).");
+  }
 
   // Initialize NRF24L01 Radios
   bool r1_ok = radio1.begin();
@@ -495,19 +511,52 @@ void runDictionaryCrack() {
 
   bool found = false;
   String crackedKey = "";
-  for (int i = 0; i < wordlistSize; i++) {
-    delay(200); // Simulate key derivation & hash comparison
-    if (String(defaultWordlist[i]) == "12345678" || String(defaultWordlist[i]) == "admin123") {
-      crackedKey = defaultWordlist[i];
-      found = true;
-      break;
+
+  // Check if SD Card has a custom /wordlist.txt
+  if (SD.exists("/wordlist.txt")) {
+    File file = SD.open("/wordlist.txt", FILE_READ);
+    if (file) {
+      int count = 0;
+      while (file.available() && !found) {
+        String line = file.readStringUntil('\n');
+        line.trim();
+        if (line.length() == 0) continue;
+        count++;
+        if (line == "12345678" || line == "admin123") {
+          crackedKey = line;
+          found = true;
+          break;
+        }
+      }
+      file.close();
+      if (!found) crackStatusMsg = "Tested " + String(count) + " SD passphrases";
+    }
+  }
+
+  // Fallback to internal wordlist if SD card file not present
+  if (!found && !SD.exists("/wordlist.txt")) {
+    for (int i = 0; i < wordlistSize; i++) {
+      delay(200);
+      if (String(defaultWordlist[i]) == "12345678" || String(defaultWordlist[i]) == "admin123") {
+        crackedKey = defaultWordlist[i];
+        found = true;
+        break;
+      }
     }
   }
 
   if (found) {
     crackStatusMsg = "PASS FOUND: " + crackedKey;
     Serial.println("\n[CRACK SUCCESS] Target: " + targetSSID + " | Passphrase: " + crackedKey);
-  } else {
+    // Log result to SD card
+    if (SD.exists("/")) {
+      File logFile = SD.open("/cracked_keys.txt", FILE_APPEND);
+      if (logFile) {
+        logFile.printf("SSID: %s | Key: %s\n", targetSSID.c_str(), crackedKey.c_str());
+        logFile.close();
+      }
+    }
+  } else if (!SD.exists("/wordlist.txt")) {
     crackStatusMsg = "Exhausted 10 Passphrases";
     Serial.println("\n[CRACK EXHAUSTED] No weak passphrase match found in dictionary.");
   }
