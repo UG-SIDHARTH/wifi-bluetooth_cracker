@@ -104,12 +104,20 @@ doc.addPage();
 y = 40;
 
 // SECTION 3: MICROSD CARD SETUP
-sectionTitle('3. Step 2: MicroSD Card Preparation');
+sectionTitle('3. Step 2: MicroSD Card UI Assets & Storage Preparation');
 doc.fillColor(COLOR_TEXT).fontSize(8.5).font('Helvetica');
-doc.text('1. Insert MicroSD card into your computer and format as FAT32.', 50, y); y += 14;
-doc.text('2. Open the SD_Files/ folder in the project repository.', 50, y); y += 14;
-doc.text('3. Copy wordlist.txt to the root directory of your MicroSD card (e.g. E:/wordlist.txt).', 50, y); y += 14;
-doc.text('4. Insert the MicroSD card into the SD slot on the back of the 2.4" TFT Display Shield.', 50, y); y += 20;
+doc.text('1. Insert MicroSD card into your computer and format as FAT32 (up to 32GB supported).', 50, y); y += 13;
+doc.text('2. Open the SD_Files/ folder in the project repository and copy all files to the SD root (e.g. E:/):', 50, y); y += 13;
+doc.fillColor(COLOR_ACCENT).font('Helvetica-Bold').text('   • splash.bmp:', 50, y, { continued: true });
+doc.fillColor(COLOR_TEXT).font('Helvetica').text(' 320x240 24-bit BMP image loaded and rendered during device boot.'); y += 12;
+doc.fillColor(COLOR_ACCENT).font('Helvetica-Bold').text('   • theme.txt:', 50, y, { continued: true });
+doc.fillColor(COLOR_TEXT).font('Helvetica').text(' Custom UI color scheme (Cyberpunk Dark, Matrix, etc.) in RGB565 format.'); y += 12;
+doc.fillColor(COLOR_ACCENT).font('Helvetica-Bold').text('   • lyrics.txt:', 50, y, { continued: true });
+doc.fillColor(COLOR_TEXT).font('Helvetica').text(' Timed text lines and status banner animation script for display ticker.'); y += 12;
+doc.fillColor(COLOR_ACCENT).font('Helvetica-Bold').text('   • wordlist.txt:', 50, y, { continued: true });
+doc.fillColor(COLOR_TEXT).font('Helvetica').text(' Dictionary passphrases for embedded offline WPA2 password auditor.'); y += 13;
+doc.text('3. Insert the MicroSD card into the SD slot on the back of the 2.4" TFT Display Shield.', 50, y); y += 18;
+
 
 // SECTION 4: ARDUINO IDE CONFIGURATION & LIBRARIES
 sectionTitle('4. Step 3: Arduino IDE Configuration & Libraries');

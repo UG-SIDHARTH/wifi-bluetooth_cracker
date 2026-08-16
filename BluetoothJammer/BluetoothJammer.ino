@@ -156,17 +156,40 @@ const char* defaultWordlist[] = {
 const int wordlistSize = 10;
 String crackStatusMsg = "Ready for Dictionary Test";
 
-// UI Color Palette (RGB565)
-#define COLOR_BG         0x0821  // Deep Navy
-#define COLOR_CARD       0x18E3  // Dark Card
-#define COLOR_HEADER     0x001F  // Header Blue
-#define COLOR_TEXT       0xFFFF  // White
-#define COLOR_TEXT_MUTED 0x9CD3  // Grey
-#define COLOR_ACCENT     0x07FF  // Cyan
-#define COLOR_GREEN      0x07E0  // Green
-#define COLOR_RED        0xF800  // Red
-#define COLOR_YELLOW     0xFFE0  // Yellow
-#define COLOR_PURPLE     0x780F  // Purple
+// Dynamic UI Color Palette (Default: Cyberpunk Dark, overridable via SD /theme.txt)
+uint16_t uiColorBg         = 0x0821;  // Deep Navy
+uint16_t uiColorCard       = 0x18E3;  // Dark Card
+uint16_t uiColorHeader     = 0x001F;  // Header Blue
+uint16_t uiColorText       = 0xFFFF;  // White
+uint16_t uiColorTextMuted  = 0x9CD3;  // Grey
+uint16_t uiColorAccent     = 0x07FF;  // Cyan
+uint16_t uiColorGreen      = 0x07E0;  // Green
+uint16_t uiColorRed        = 0xF800;  // Red
+uint16_t uiColorYellow     = 0xFFE0;  // Yellow
+uint16_t uiColorPurple     = 0x780F;  // Purple
+
+#define COLOR_BG         uiColorBg
+#define COLOR_CARD       uiColorCard
+#define COLOR_HEADER     uiColorHeader
+#define COLOR_TEXT       uiColorText
+#define COLOR_TEXT_MUTED uiColorTextMuted
+#define COLOR_ACCENT     uiColorAccent
+#define COLOR_GREEN      uiColorGreen
+#define COLOR_RED        uiColorRed
+#define COLOR_YELLOW     uiColorYellow
+#define COLOR_PURPLE     uiColorPurple
+
+String uiAppTitle          = "CRADLEGUARD 3.0";
+bool   uiShowSdBadge       = true;
+bool   uiUseSdSplash       = true;
+bool   uiUseSdBg           = false;
+bool   uiEnableLyrics      = true;
+bool   sdCardAvailable     = false;
+
+// SD Card Lyrics & Banner State
+unsigned long lastLyricsUpdateTime = 0;
+String currentLyricsLine = "CRADLEGUARD 3.0 SYSTEM READY";
+int lyricsLineIndex = 0;
 
 // ----------------------------------------------------
 // Function Declarations
@@ -175,6 +198,10 @@ void setupRadio(RF24& radio);
 void setMode(SystemMode newMode);
 void sendRandomPacket();
 void initDisplay();
+void initSDCard();
+void loadSDTheme();
+bool drawBMP(const char* filename, int x = 0, int y = 0);
+void updateLyricsAnimation();
 void drawStaticUI();
 void updateDisplayUI(bool forceRedraw = false);
 void checkTouch();
@@ -210,7 +237,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\n=======================================================");
   Serial.println("  CRADLEGUARD ESP32 BT & WI-FI SECURITY TOOLKIT");
-  Serial.println("  FOR EDUCATIONAL & AUTHORIZED PENETRATION TESTING ONLY");
+  Serial.println("  DYNAMIC SD-CARD UI & DISPLAY SYSTEM INTEGRATED");
   Serial.println("=======================================================\n");
 
   pinMode(BUTTON_BOOT_PIN, INPUT_PULLUP);
@@ -221,18 +248,8 @@ void setup() {
   for (uint8_t i = 0; i < 32; i++) payload[i] = random(256);
   for (int i = 0; i < 79; i++) bluetooth_channels[i] = i + 2;
 
+  // Initialize Display & SD Card UI Core
   initDisplay();
-
-  // Initialize SD Card Module
-  bool sd_ok = SD.begin(SD_CS_PIN);
-  if (sd_ok) {
-    Serial.println("SD Card initialized successfully!");
-    if (SD.exists("/wordlist.txt")) {
-      Serial.println("Found custom /wordlist.txt on SD card.");
-    }
-  } else {
-    Serial.println("No SD Card detected (or using internal flash memory fallback).");
-  }
 
   // Initialize NRF24L01 Radios
   bool r1_ok = radio1.begin();
@@ -343,6 +360,7 @@ void loop() {
 
   checkTouch();
   checkPhysicalButtons();
+  updateLyricsAnimation();
 
   if (millis() - lastUIDrawTime >= 250) {
     lastUIDrawTime = millis();
@@ -660,12 +678,241 @@ void startWebPortal() {
 }
 
 // ----------------------------------------------------
+// MicroSD Card UI & Graphics Engine
+// ----------------------------------------------------
+
+uint16_t parseColor(String val) {
+  val.trim();
+  if (val.startsWith("0x") || val.startsWith("0X")) {
+    return (uint16_t) strtol(val.c_str(), NULL, 16);
+  }
+  return (uint16_t) val.toInt();
+}
+
+void initSDCard() {
+  Serial.println("Mounting MicroSD Card (CS: GPIO 13)...");
+  sdCardAvailable = SD.begin(SD_CS_PIN);
+  if (sdCardAvailable) {
+    Serial.println("✓ MicroSD Card successfully mounted!");
+    loadSDTheme();
+  } else {
+    Serial.println("⚠ No MicroSD Card detected (using internal flash defaults).");
+  }
+}
+
+void loadSDTheme() {
+  if (!sdCardAvailable) return;
+  if (!SD.exists("/theme.txt")) {
+    Serial.println("No /theme.txt found on SD card; using built-in Cyberpunk Dark theme.");
+    return;
+  }
+
+  File f = SD.open("/theme.txt", FILE_READ);
+  if (!f) return;
+
+  Serial.println("Loading custom UI Theme from SD: /theme.txt...");
+  while (f.available()) {
+    String line = f.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0 || line.startsWith("#")) continue;
+
+    int eqIdx = line.indexOf('=');
+    if (eqIdx == -1) continue;
+
+    String key = line.substring(0, eqIdx);
+    String val = line.substring(eqIdx + 1);
+    key.trim();
+    val.trim();
+
+    if (key.equalsIgnoreCase("COLOR_BG")) uiColorBg = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_HEADER")) uiColorHeader = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_CARD")) uiColorCard = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_TEXT")) uiColorText = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_TEXT_MUTED")) uiColorTextMuted = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_ACCENT")) uiColorAccent = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_GREEN")) uiColorGreen = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_RED")) uiColorRed = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_YELLOW")) uiColorYellow = parseColor(val);
+    else if (key.equalsIgnoreCase("COLOR_PURPLE")) uiColorPurple = parseColor(val);
+    else if (key.equalsIgnoreCase("APP_TITLE")) uiAppTitle = val;
+    else if (key.equalsIgnoreCase("SHOW_SD_BADGE")) uiShowSdBadge = (val.toInt() != 0);
+    else if (key.equalsIgnoreCase("USE_SD_SPLASH")) uiUseSdSplash = (val.toInt() != 0);
+    else if (key.equalsIgnoreCase("USE_SD_BG")) uiUseSdBg = (val.toInt() != 0);
+    else if (key.equalsIgnoreCase("ENABLE_LYRICS_ANIMATION")) uiEnableLyrics = (val.toInt() != 0);
+  }
+  f.close();
+  Serial.println("✓ Custom SD UI Theme applied successfully!");
+}
+
+// Read 16-bit and 32-bit little-endian values from File
+uint16_t readLE16(File& f) {
+  uint16_t result;
+  f.read((uint8_t*)&result, 2);
+  return result;
+}
+
+uint32_t readLE32(File& f) {
+  uint32_t result;
+  f.read((uint8_t*)&result, 4);
+  return result;
+}
+
+// ----------------------------------------------------
+// Stream uncompressed 24-bit / 16-bit BMP from SD Card
+// ----------------------------------------------------
+bool drawBMP(const char* filename, int x, int y) {
+  if (!sdCardAvailable) return false;
+  if (!SD.exists(filename)) {
+    return false;
+  }
+
+  File bmpFile = SD.open(filename, FILE_READ);
+  if (!bmpFile) return false;
+
+  // Check 'BM' signature
+  if (readLE16(bmpFile) != 0x4D42) {
+    bmpFile.close();
+    return false;
+  }
+
+  readLE32(bmpFile); // File size
+  readLE32(bmpFile); // Reserved
+  uint32_t imageOffset = readLE32(bmpFile);
+
+  readLE32(bmpFile); // DIB header size
+  int32_t bmpWidth = (int32_t)readLE32(bmpFile);
+  int32_t bmpHeight = (int32_t)readLE32(bmpFile);
+  uint16_t planes = readLE16(bmpFile);
+  uint16_t depth = readLE16(bmpFile);
+  uint32_t compression = readLE32(bmpFile);
+
+  if (planes != 1 || (depth != 24 && depth != 16) || compression != 0) {
+    bmpFile.close();
+    return false;
+  }
+
+  bool flip = true;
+  if (bmpHeight < 0) {
+    bmpHeight = -bmpHeight;
+    flip = false; // Top-down BMP
+  }
+
+  int w = bmpWidth;
+  int h = bmpHeight;
+  if ((x + w - 1) >= 320) w = 320 - x;
+  if ((y + h - 1) >= 240) h = 240 - y;
+
+  int rowSize = (depth == 24) ? ((bmpWidth * 3 + 3) & ~3) : ((bmpWidth * 2 + 3) & ~3);
+
+  #define BUFFPIXEL 40
+  uint8_t sdbuffer[3 * BUFFPIXEL];
+  int buffidx = sizeof(sdbuffer);
+
+  for (int row = 0; row < h; row++) {
+    int pos = flip ? (imageOffset + (bmpHeight - 1 - row) * rowSize) : (imageOffset + row * rowSize);
+    if (bmpFile.position() != pos) {
+      bmpFile.seek(pos);
+      buffidx = sizeof(sdbuffer);
+    }
+
+    for (int col = 0; col < w; col++) {
+      if (buffidx >= sizeof(sdbuffer)) {
+        bmpFile.read(sdbuffer, sizeof(sdbuffer));
+        buffidx = 0;
+      }
+
+      uint16_t color;
+      if (depth == 24) {
+        uint8_t b = sdbuffer[buffidx++];
+        uint8_t g = sdbuffer[buffidx++];
+        uint8_t r = sdbuffer[buffidx++];
+        color = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+      } else {
+        color = sdbuffer[buffidx] | (sdbuffer[buffidx + 1] << 8);
+        buffidx += 2;
+      }
+      tft.drawPixel(x + col, y + row, color);
+    }
+  }
+
+  bmpFile.close();
+  return true;
+}
+
+// ----------------------------------------------------
+// SD Card Timed Lyrics & Status Banner Animation
+// ----------------------------------------------------
+void updateLyricsAnimation() {
+  if (!uiEnableLyrics) return;
+  if (millis() - lastLyricsUpdateTime < 3000) return;
+  lastLyricsUpdateTime = millis();
+
+  if (sdCardAvailable && SD.exists("/lyrics.txt")) {
+    File f = SD.open("/lyrics.txt", FILE_READ);
+    if (f) {
+      int lineCount = 0;
+      String targetLine = "";
+      while (f.available()) {
+        String l = f.readStringUntil('\n');
+        l.trim();
+        if (l.length() == 0 || l.startsWith("#")) continue;
+        if (lineCount == lyricsLineIndex) {
+          // Remove timestamp if present: [00:00.00]
+          if (l.startsWith("[")) {
+            int closeBracket = l.indexOf(']');
+            if (closeBracket != -1) l = l.substring(closeBracket + 1);
+          }
+          l.trim();
+          targetLine = l;
+          break;
+        }
+        lineCount++;
+      }
+      f.close();
+
+      if (targetLine.length() > 0) {
+        currentLyricsLine = targetLine;
+        lyricsLineIndex++;
+      } else {
+        lyricsLineIndex = 0; // Loop back
+      }
+    }
+  }
+
+  // Update marquee text on Main Menu
+  if (currentScreen == SCREEN_MAIN_MENU) {
+    tft.fillRect(10, 222, 300, 14, COLOR_BG);
+    tft.setTextColor(COLOR_ACCENT);
+    tft.setTextSize(1);
+    tft.setCursor(14, 225);
+    tft.print(currentLyricsLine.substring(0, 38));
+  }
+}
+
+// ----------------------------------------------------
 // Display Functions (2.4" TFT LCD Shield - 8-Bit Parallel)
 // ----------------------------------------------------
 void runStartupAnimation() {
   tft.fillScreen(COLOR_BG);
 
-  // 3D Cube Vertices (8 3D Points)
+  // 1. If SD Card has /splash.bmp, display it with loading progress bar!
+  if (sdCardAvailable && uiUseSdSplash && SD.exists("/splash.bmp")) {
+    Serial.println("Displaying custom SD splash.bmp...");
+    if (drawBMP("/splash.bmp", 0, 0)) {
+      // Draw progress bar across bottom of splash
+      tft.drawRoundRect(40, 205, 240, 14, 4, COLOR_ACCENT);
+      for (int p = 0; p <= 100; p += 5) {
+        int fillW = map(p, 0, 100, 0, 236);
+        tft.fillRoundRect(42, 207, fillW, 10, 2, COLOR_GREEN);
+        delay(25);
+      }
+      delay(400);
+    }
+  }
+
+  // 2. 3D Rotating Wireframe Cube Boot Animation
+  tft.fillScreen(COLOR_BG);
+
   float vertices[8][3] = {
     {-24, -24, -24}, { 24, -24, -24}, { 24,  24, -24}, {-24,  24, -24},
     {-24, -24,  24}, { 24, -24,  24}, { 24,  24,  24}, {-24,  24,  24}
@@ -688,12 +935,12 @@ void runStartupAnimation() {
   tft.setTextColor(COLOR_TEXT);
   tft.setTextSize(2);
   tft.setCursor(60, 140);
-  tft.print("CRADLEGUARD 3.0");
+  tft.print(uiAppTitle);
 
   tft.setTextColor(COLOR_TEXT_MUTED);
   tft.setTextSize(1);
   tft.setCursor(55, 162);
-  tft.print("3D HARDWARE CORE INITIALIZING...");
+  tft.print("SD CORE & 3D ENGINE INITIALIZING...");
 
   // Progress Bar Outline
   int barX = 40;
@@ -702,56 +949,47 @@ void runStartupAnimation() {
   int barHeight = 16;
   tft.drawRoundRect(barX, barY, barWidth, barHeight, 4, COLOR_ACCENT);
 
-  // 3D Matrix Rotation Loop (45 Frames)
-  for (int frame = 0; frame < 45; frame++) {
-    // Calculate 3D to 2D Perspective Projection
+  // 3D Matrix Rotation Loop (40 Frames)
+  for (int frame = 0; frame < 40; frame++) {
     for (int i = 0; i < 8; i++) {
       float x = vertices[i][0];
       float y = vertices[i][1];
       float z = vertices[i][2];
 
-      // Rotate X
       float y1 = y * cos(angleX) - z * sin(angleX);
       float z1 = y * sin(angleX) + z * cos(angleX);
 
-      // Rotate Y
       float x2 = x * cos(angleY) + z1 * sin(angleY);
       float z2 = -x * sin(angleY) + z1 * cos(angleY);
 
-      // Rotate Z
       float x3 = x2 * cos(angleZ) - y1 * sin(angleZ);
       float y3 = x2 * sin(angleZ) + y1 * cos(angleZ);
 
-      // Perspective Projection
       float fov = 180.0 / (180.0 + z2);
       currX[i] = centerX + (int)(x3 * fov);
       currY[i] = centerY + (int)(y3 * fov);
     }
 
-    // Erase Previous 3D Frame
     if (frame > 0) {
       for (int e = 0; e < 12; e++) {
         tft.drawLine(prevX[edges[e][0]], prevY[edges[e][0]], prevX[edges[e][1]], prevY[edges[e][1]], COLOR_BG);
       }
     }
 
-    // Draw New 3D Wireframe Frame
     for (int e = 0; e < 12; e++) {
       uint16_t color = (e < 4) ? COLOR_ACCENT : (e < 8 ? COLOR_YELLOW : COLOR_GREEN);
       tft.drawLine(currX[edges[e][0]], currY[edges[e][0]], currX[edges[e][1]], currY[edges[e][1]], color);
     }
 
-    // Save projected 2D coordinates for erase pass
     for (int i = 0; i < 8; i++) {
       prevX[i] = currX[i];
       prevY[i] = currY[i];
     }
 
-    // Progress Bar Increment
-    int fillW = map(frame, 0, 44, 0, barWidth - 4);
+    int fillW = map(frame, 0, 39, 0, barWidth - 4);
     tft.fillRoundRect(barX + 2, barY + 2, fillW, barHeight - 4, 2, COLOR_GREEN);
 
-    int percent = map(frame, 0, 44, 0, 100);
+    int percent = map(frame, 0, 39, 0, 100);
     tft.fillRect(140, 210, 50, 15, COLOR_BG);
     tft.setCursor(145, 210);
     tft.setTextColor(COLOR_YELLOW);
@@ -762,21 +1000,24 @@ void runStartupAnimation() {
     angleY += 0.15;
     angleZ += 0.08;
 
-    delay(35);
+    delay(30);
   }
 
-  delay(300);
+  delay(200);
 }
 
 void initDisplay() {
   uint16_t ID = tft.readID();
   Serial.print("TFT LCD Controller ID: 0x");
   Serial.println(ID, HEX);
-  if (ID == 0xD3D3 || ID == 0x0) ID = 0x9341; // Default fallback
+  if (ID == 0xD3D3 || ID == 0x0) ID = 0x9341;
   tft.begin(ID);
   tft.setRotation(1); // Landscape mode (320x240)
   tft.fillScreen(COLOR_BG);
   Serial.println("MCUFRIEND 2.4\" TFT LCD Shield initialized.");
+
+  // Initialize MicroSD Card & Load UI Assets
+  initSDCard();
 
   runStartupAnimation();
 }
@@ -804,65 +1045,92 @@ void setScreen(ScreenState s) {
 }
 
 // -----------------------------------------------------------
-// Helper: draw top header bar with optional back arrow
+// Helper: draw top header bar with optional back arrow & SD badge
 // -----------------------------------------------------------
 void drawHeader(const char* title, bool showBack) {
   tft.fillRect(0, 0, 320, 35, COLOR_HEADER);
   tft.setTextColor(COLOR_TEXT);
   tft.setTextSize(2);
   if (showBack) {
-    // "<" back indicator on the left
     tft.setCursor(6, 8);
     tft.print("<");
-    tft.setCursor(28, 8);
+    tft.setCursor(26, 8);
   } else {
     tft.setCursor(8, 8);
   }
   tft.print(title);
+
+  // MicroSD Status Badge on top right
+  if (uiShowSdBadge) {
+    if (sdCardAvailable) {
+      tft.fillRoundRect(262, 7, 52, 20, 4, COLOR_GREEN);
+      tft.setTextColor(COLOR_BG);
+      tft.setTextSize(1);
+      tft.setCursor(269, 13);
+      tft.print("SD:OK");
+    } else {
+      tft.fillRoundRect(262, 7, 52, 20, 4, 0x39E7);
+      tft.setTextColor(COLOR_TEXT_MUTED);
+      tft.setTextSize(1);
+      tft.setCursor(265, 13);
+      tft.print("SD:NONE");
+    }
+  }
 }
 
 // -----------------------------------------------------------
-// 1. MAIN MENU (3 big option buttons)
+// 1. MAIN MENU (3 big option buttons + SD status footer)
 // -----------------------------------------------------------
 void drawMainMenu() {
-  tft.fillScreen(COLOR_BG);
-  drawHeader("CRADLEGUARD 3.0", false);
+  if (uiUseSdBg && sdCardAvailable && SD.exists("/menu_bg.bmp")) {
+    drawBMP("/menu_bg.bmp", 0, 0);
+  } else {
+    tft.fillScreen(COLOR_BG);
+  }
+
+  drawHeader(uiAppTitle.c_str(), false);
 
   // -- Option 1: WIFI SCANNER (green) --
-  tft.fillRoundRect(10, 45, 300, 54, 8, 0x07C0);   // deep green
-  tft.drawRoundRect(10, 45, 300, 54, 8, COLOR_TEXT);
-  tft.setTextColor(COLOR_TEXT);
+  tft.fillRoundRect(10, 44, 300, 52, 8, COLOR_GREEN);
+  tft.drawRoundRect(10, 44, 300, 52, 8, COLOR_TEXT);
+  tft.setTextColor(COLOR_BG);
   tft.setTextSize(2);
-  tft.setCursor(22, 53);
+  tft.setCursor(22, 51);
   tft.print("1. WIFI SCANNER");
   tft.setTextSize(1);
-  tft.setTextColor(0xD7FF);
-  tft.setCursor(22, 76);
+  tft.setTextColor(0x0000);
+  tft.setCursor(22, 73);
   tft.print("Select network / Find password");
 
-  // -- Option 2: WIFI+BT JAMMER (red/orange) --
-  tft.fillRoundRect(10, 108, 300, 54, 8, 0xA000);  // dark red
-  tft.drawRoundRect(10, 108, 300, 54, 8, COLOR_TEXT);
+  // -- Option 2: WIFI+BT JAMMER (red) --
+  tft.fillRoundRect(10, 103, 300, 52, 8, COLOR_RED);
+  tft.drawRoundRect(10, 103, 300, 52, 8, COLOR_TEXT);
   tft.setTextColor(COLOR_TEXT);
   tft.setTextSize(2);
-  tft.setCursor(22, 116);
+  tft.setCursor(22, 110);
   tft.print("2. WIFI+BT JAMMER");
   tft.setTextSize(1);
-  tft.setTextColor(0xFD20);
-  tft.setCursor(22, 139);
+  tft.setTextColor(COLOR_YELLOW);
+  tft.setCursor(22, 132);
   tft.print("2.4GHz BLE, BT Classic & Wi-Fi");
 
-  // -- Option 3: RESET (grey/blue) --
-  tft.fillRoundRect(10, 171, 300, 54, 8, 0x2945);  // slate
-  tft.drawRoundRect(10, 171, 300, 54, 8, COLOR_TEXT);
+  // -- Option 3: RESET (card/slate) --
+  tft.fillRoundRect(10, 162, 300, 52, 8, COLOR_CARD);
+  tft.drawRoundRect(10, 162, 300, 52, 8, COLOR_TEXT);
   tft.setTextColor(COLOR_TEXT);
   tft.setTextSize(2);
-  tft.setCursor(22, 179);
+  tft.setCursor(22, 169);
   tft.print("3. RESET");
   tft.setTextSize(1);
   tft.setTextColor(COLOR_TEXT_MUTED);
-  tft.setCursor(22, 202);
+  tft.setCursor(22, 191);
   tft.print("Restart device to initial state");
+
+  // Bottom Status / Lyrics Banner
+  tft.setTextColor(COLOR_ACCENT);
+  tft.setTextSize(1);
+  tft.setCursor(14, 225);
+  tft.print(currentLyricsLine.substring(0, 38));
 }
 
 // -----------------------------------------------------------

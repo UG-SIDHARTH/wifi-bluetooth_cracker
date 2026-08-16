@@ -139,7 +139,21 @@
 
   <div class="section-title">1. Master Hardware Breadboard Wiring Diagram</div>
   <div style="text-align: center; margin-bottom: 20px;">
-    <img src="Images/wiring-full-breadboard.png" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #cbd5e1;" alt="Master Hardware Breadboard Wiring Diagram">
+    <img src="Images/wiring-full-breadboard.png" style="max-width: 650px; width: 100%; height: auto; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" alt="Master Hardware Breadboard Wiring Diagram">
+  </div>
+
+  <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #2563eb; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+    <div style="font-weight: 700; color: #0f172a; font-size: 14px; margin-bottom: 10px;">COMPONENTS SHOWN IN WIRING DIAGRAM:</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; font-size: 13px;">
+      <div><strong style="color: #2563eb;">• ESP32 30-Pin Dev Board:</strong> Center of breadboard (30-pin DIP layout)</div>
+      <div><strong style="color: #2563eb;">• TURN ON Pushbutton:</strong> Lower left — GPIO 12 & GND (INPUT_PULLUP)</div>
+      <div><strong style="color: #2563eb;">• MCUFRIEND 2.4" TFT Shield:</strong> Left side — 8-bit parallel bus + SPI SD slot</div>
+      <div><strong style="color: #2563eb;">• TURN OFF Pushbutton:</strong> Lower right — GPIO 14 & GND (INPUT_PULLUP)</div>
+      <div><strong style="color: #2563eb;">• NRF24L01 #1 (PCB Ant.):</strong> Right top — CE: GPIO 22, CSN: GPIO 21</div>
+      <div><strong style="color: #2563eb;">• BOOT Button (GPIO 0):</strong> Built-in on ESP32 board (BACK navigation)</div>
+      <div><strong style="color: #2563eb;">• NRF24L01 #2 (PCB Ant.):</strong> Right bottom — CE: GPIO 16, CSN: GPIO 15</div>
+      <div><strong style="color: #2563eb;">• Status LED (GPIO 2):</strong> Built-in on ESP32 board (Active indicator)</div>
+    </div>
   </div>
 
   <div class="section-title">2. ESP32 Pin Allocation Schematic</div>

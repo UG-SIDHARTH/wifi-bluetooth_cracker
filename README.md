@@ -60,12 +60,17 @@ Connect the modules according to the pinout below:
 
 ---
 
-## 💾 STEP 2: MicroSD Card Setup
+## 💾 STEP 2: MicroSD Card UI Assets & Storage Setup
 
-1. Insert your MicroSD card into your computer and format it as **FAT32**.
-2. Open the [`SD_Files/`](file:///c:/Users/Lenovo/Downloads/wifi+bluettoth/wifi-bluetooth_cracker/SD_Files) folder in this repository.
-3. Copy **`wordlist.txt`** to the root directory of your MicroSD card.
-4. Plug the MicroSD card into the SD card slot on the back of your 2.4" TFT Display Shield.
+1. Insert your MicroSD card into your computer and format it as **FAT32** (up to 32GB supported).
+2. Open the [`SD_Files/`](file:///d:/FILES%20FOR%20ANTIGRAVITY/wifi-bluetooth_cracker/SD_Files) folder in this repository.
+3. Copy the contents of `SD_Files/` to the root directory of your MicroSD card:
+   - **`splash.bmp`**: 320x240 24-bit uncompressed BMP splash image displayed on boot.
+   - **`theme.txt`**: Customizable UI color scheme (Cyberpunk Dark, Retro Matrix, etc.) in RGB565 format.
+   - **`lyrics.txt`**: Synchronized status text / lyrics banner animation lines streamed to the display.
+   - **`wordlist.txt`**: Passphrase dictionary for the embedded offline WPA2 password auditor.
+4. Plug the MicroSD card into the SD slot on the back of your 2.4" TFT Display Shield.
+5. On startup, the firmware detects the SD card (`[SD:OK]`), loads your custom theme, displays your splash bitmap, and enables dynamic status animations!
 
 ---
 

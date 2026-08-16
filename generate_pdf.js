@@ -33,40 +33,65 @@ doc.font('Helvetica').fontSize(8.5).text('This device design and documentation a
 let y = 175;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section 1: Full Breadboard Wiring Diagram  (full-width, large image)
+// Section 1: Full Breadboard Wiring Diagram (Centered, High-Res, Perfectly Scaled)
 // ─────────────────────────────────────────────────────────────────────────────
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold')
-   .text('1. Full Master Hardware Breadboard Wiring Diagram', 40, y);
+doc.fillColor(COLOR_PRIMARY).fontSize(13).font('Helvetica-Bold')
+   .text('1. Master Hardware Breadboard Wiring Diagram', 40, y);
 y += 4;
-doc.moveTo(40, y + 14).lineTo(555, y + 14).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
-y += 20;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 18;
 
 if (fs.existsSync(imagePath)) {
-  // Fit the image as large as possible on the remaining page space
-  doc.image(imagePath, 40, y, { width: 515 });
-  y += 330;
+  // Center a 380x380 image on the page (Page width = 595, margin = 40)
+  const imgSize = 370;
+  const imgX = 40 + (515 - imgSize) / 2;
+  
+  // Background card / border for image
+  doc.roundedRect(imgX - 4, y - 4, imgSize + 8, imgSize + 8, 6)
+     .fillAndStroke('#f8fafc', '#cbd5e1');
+  
+  doc.image(imagePath, imgX, y, { width: imgSize, height: imgSize });
+  y += imgSize + 14;
 }
 
-// Component key below image
-doc.fillColor('#334155').fontSize(9).font('Helvetica-Bold').text('Components shown in diagram:', 40, y);
-y += 13;
+// Component key card cleanly below image
+doc.roundedRect(40, y, 515, 125, 6).fillAndStroke('#f8fafc', '#cbd5e1');
+doc.rect(40, y, 4, 125).fill(COLOR_ACCENT);
 
-const compList = [
-  ['ESP32 30-Pin Dev Board',    'Center of breadboard — spans both halves'],
-  ['MCUFRIEND 2.4" TFT Shield', 'Left side — connected via 20-wire ribbon to ESP32'],
-  ['NRF24L01 #1 (PCB Ant.)',    'Right top — CE→GPIO 22, CSN→GPIO 21, SPI shared'],
-  ['NRF24L01 #2 (PCB Ant.)',    'Right bottom — CE→GPIO 16, CSN→GPIO 15, SPI shared'],
-  ['TURN ON Pushbutton',        'Lower breadboard left — GPIO 12 & GND'],
-  ['TURN OFF Pushbutton',       'Lower breadboard right — GPIO 14 & GND'],
-  ['BOOT Button (GPIO 0)',       'Built-in on ESP32 board (no external wiring needed)'],
-  ['Status LED (GPIO 2)',        'Built-in on ESP32 board (no external wiring needed)'],
+doc.fillColor(COLOR_PRIMARY).fontSize(9.5).font('Helvetica-Bold')
+   .text('COMPONENTS SHOWN IN WIRING DIAGRAM:', 54, y + 10);
+
+const compLeft = [
+  ['ESP32 30-Pin Dev Board', 'Center of breadboard (30-pin DIP layout)'],
+  ['MCUFRIEND 2.4" TFT Shield', 'Left side — 8-bit parallel bus + SPI SD slot'],
+  ['NRF24L01 #1 (PCB Ant.)', 'Right top — CE: GPIO 22, CSN: GPIO 21'],
+  ['NRF24L01 #2 (PCB Ant.)', 'Right bottom — CE: GPIO 16, CSN: GPIO 15'],
 ];
+
+const compRight = [
+  ['TURN ON Pushbutton', 'Lower left — GPIO 12 & GND (INPUT_PULLUP)'],
+  ['TURN OFF Pushbutton', 'Lower right — GPIO 14 & GND (INPUT_PULLUP)'],
+  ['BOOT Button (GPIO 0)', 'Built-in on ESP32 board (BACK navigation)'],
+  ['Status LED (GPIO 2)', 'Built-in on ESP32 board (Active indicator)'],
+];
+
+let ky = y + 28;
 doc.fontSize(8).font('Helvetica');
-compList.forEach(([name, desc]) => {
-  doc.fillColor(COLOR_ACCENT).text('• ' + name + ':', 48, y, { continued: true, width: 160 });
-  doc.fillColor(COLOR_TEXT).text('  ' + desc, { width: 340 });
-  y += 12;
-});
+
+for (let i = 0; i < compLeft.length; i++) {
+  // Left column
+  doc.fillColor(COLOR_ACCENT).font('Helvetica-Bold').text('• ' + compLeft[i][0] + ':', 54, ky, { continued: true });
+  doc.fillColor(COLOR_TEXT).font('Helvetica').text(' ' + compLeft[i][1], { width: 230 });
+  
+  // Right column
+  doc.fillColor(COLOR_ACCENT).font('Helvetica-Bold').text('• ' + compRight[i][0] + ':', 305, ky, { continued: true });
+  doc.fillColor(COLOR_TEXT).font('Helvetica').text(' ' + compRight[i][1], { width: 235 });
+  
+  ky += 22;
+}
+
+doc.fontSize(7.5).fillColor('#64748b').text('ESP32 Security Suite Master Pinout Guide • Page 1 of 5', 40, 785, { align: 'center', width: 515 });
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE 2 — Wire-by-Wire Color Legend + Full Connection Table
@@ -178,16 +203,18 @@ y = drawTable(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAGE 3 — ESP32 Pin Allocation Box
+// PAGE 3 — ESP32 Pin Allocation Box & Hardware Interfaces
 // ─────────────────────────────────────────────────────────────────────────────
 doc.addPage();
 y = 40;
 
 doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('2. ESP32 Pin Allocation Overview', 40, y);
-y += 20;
+y += 4;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 18;
 
-doc.rect(40, y, 515, 115).fill('#1e293b');
-doc.fillColor('#facc15').fontSize(11).font('Helvetica-Bold').text('ESP32 30-PIN DEV BOARD LAYOUT', 40, y + 8, { align: 'center', width: 515 });
+doc.roundedRect(40, y, 515, 125, 6).fill('#0f172a');
+doc.fillColor('#facc15').fontSize(11).font('Helvetica-Bold').text('ESP32 30-PIN DEV BOARD PINOUT', 40, y + 10, { align: 'center', width: 515 });
 
 const leftPins = [
   ['Radio 1 CE', 'GPIO 22'],
@@ -211,24 +238,24 @@ const rightPins = [
   ['GND',     'Ground Rail']
 ];
 
-let py = y + 28;
+let py = y + 30;
 doc.fontSize(8.5).font('Helvetica');
 for (let i = 0; i < leftPins.length; i++) {
-  doc.fillColor('#cbd5e1').text(leftPins[i][0], 65, py);
+  doc.fillColor('#cbd5e1').font('Helvetica').text(leftPins[i][0], 65, py);
   doc.fillColor('#38bdf8').font('Helvetica-Bold').text(leftPins[i][1], 170, py);
 
   doc.fillColor('#38bdf8').font('Helvetica-Bold').text(rightPins[i][0], 330, py);
   doc.fillColor('#cbd5e1').font('Helvetica').text(rightPins[i][1], 410, py);
-  py += 10.5;
+  py += 11;
 }
 
-// PAGE 4
-doc.addPage();
-y = 40;
+y += 145;
 
-// Section 3: Shared SPI Bus Table & Wi-Fi Radio
+// Section 3: Shared SPI Bus Table & Wi-Fi Radio on Page 3
 doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('3. Hardware Interfaces (VSPI & ESP32 Wi-Fi Radio)', 40, y);
-y += 20;
+y += 4;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 18;
 
 y = drawTable(
   ['Signal / Interface', 'ESP32 Pin', 'Connected Modules / Mode', 'Type'],
@@ -242,14 +269,22 @@ y = drawTable(
   [120, 80, 225, 90]
 );
 
-y += 15;
+doc.fontSize(7.5).fillColor('#64748b').text('ESP32 Security Suite Master Pinout Guide • Page 3 of 5', 40, 785, { align: 'center', width: 515 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE 4 — NRF24L01 Radios & 2.4" TFT Display Shield
+// ─────────────────────────────────────────────────────────────────────────────
+doc.addPage();
+y = 40;
 
 // Section 4: Radio 1 & 2 Tables
 doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('4. Radio Transceiver Modules (NRF24L01)', 40, y);
-y += 18;
+y += 4;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 16;
 
-doc.fillColor('#0f172a').fontSize(10).font('Helvetica-Bold').text('Radio #1 (Lower Channels 2402-2440 MHz):', 40, y);
-y += 14;
+doc.fillColor('#0f172a').fontSize(9.5).font('Helvetica-Bold').text('Radio #1 (Lower Channels 2402–2440 MHz):', 40, y);
+y += 12;
 
 y = drawTable(
   ['NRF24 #1 Pin', 'ESP32 Pin', 'Function', 'Signal Category'],
@@ -263,9 +298,9 @@ y = drawTable(
   [120, 110, 160, 125]
 );
 
+y += 10;
+doc.fillColor('#0f172a').fontSize(9.5).font('Helvetica-Bold').text('Radio #2 (Upper Channels 2441–2480 MHz):', 40, y);
 y += 12;
-doc.fillColor('#0f172a').fontSize(10).font('Helvetica-Bold').text('Radio #2 (Upper Channels 2441-2480 MHz):', 40, y);
-y += 14;
 
 y = drawTable(
   ['NRF24 #2 Pin', 'ESP32 Pin', 'Function', 'Signal Category'],
@@ -279,11 +314,13 @@ y = drawTable(
   [120, 110, 160, 125]
 );
 
-y += 15;
+y += 14;
 
 // Section 5: Display (MCUFRIEND 2.4" TFT LCD Shield - 8-Bit Parallel)
-doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. MCUFRIEND 2.4" TFT LCD Shield (www.mcufriend.com)', 40, y);
-y += 18;
+doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('5. MCUFRIEND 2.4" TFT LCD Shield (8-Bit Parallel)', 40, y);
+y += 4;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 14;
 
 y = drawTable(
   ['Shield Pin', 'ESP32 Pin', 'Function', 'Signal Category'],
@@ -311,39 +348,74 @@ y = drawTable(
   [100, 120, 160, 135]
 );
 
-// PAGE 5
+doc.fontSize(7.5).fillColor('#64748b').text('ESP32 Security Suite Master Pinout Guide • Page 4 of 5', 40, 785, { align: 'center', width: 515 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE 5 — Pushbuttons & Power Recommendations
+// ─────────────────────────────────────────────────────────────────────────────
 doc.addPage();
 y = 40;
 
 // Section 6: Push Buttons
 doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('6. Hardware Pushbuttons & System Controls', 40, y);
-y += 18;
+y += 4;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
+y += 16;
 
 y = drawTable(
   ['Button / LED', 'ESP32 Pin', 'Wiring Connection', 'Mode'],
   [
     ['TURN ON Button', 'GPIO 12', 'One leg to GPIO 12, other leg to GND', 'INPUT_PULLUP'],
     ['TURN OFF Button', 'GPIO 14', 'One leg to GPIO 14, other leg to GND', 'INPUT_PULLUP'],
-    ['BOOT Button', 'GPIO 0', 'Built-in BOOT pushbutton on ESP32 board', 'Internal'],
-    ['Status LED', 'GPIO 2', 'Built-in LED on ESP32 board', 'OUTPUT']
+    ['BOOT Button', 'GPIO 0', 'Built-in BOOT pushbutton on ESP32 board', 'Internal (BACK Key)'],
+    ['Status LED', 'GPIO 2', 'Built-in LED on ESP32 board', 'OUTPUT (Active Status)']
   ],
   y,
   [120, 90, 205, 100]
 );
 
-y += 25;
+y += 20;
 
 // Section 7: Power & Capacitor Notes
 doc.fillColor(COLOR_PRIMARY).fontSize(14).font('Helvetica-Bold').text('7. Power Supply & Capacitor Recommendations', 40, y);
-y += 18;
-
-doc.fillColor(COLOR_TEXT).fontSize(9.5).font('Helvetica');
-doc.text('1. Built-in PCB Antenna Modules: Draw ~12mA each. NO CAPACITORS REQUIRED! Power directly from ESP32 3.3V pin.', 50, y);
+y += 4;
+doc.moveTo(40, y + 12).lineTo(555, y + 12).strokeColor(COLOR_ACCENT).lineWidth(1.5).stroke();
 y += 16;
-doc.text('2. High-Power PA+LNA Modules: Draw ~115mA peak each. Requires 10uF-47uF capacitors across VCC & GND to buffer current spikes.', 50, y);
-y += 25;
 
-doc.fontSize(8.5).fillColor('#64748b').text('Document generated automatically for CradleGuard 3.0 ESP32 Security Suite.', 40, 780, { align: 'center', width: 515 });
+// Power Cards
+doc.roundedRect(40, y, 515, 60, 4).fillAndStroke('#f8fafc', '#cbd5e1');
+doc.rect(40, y, 4, 60).fill('#16a34a');
+doc.fillColor('#16a34a').fontSize(9).font('Helvetica-Bold').text('STANDARD PCB ANTENNA MODULES (RECOMMENDED):', 52, y + 10);
+doc.fillColor(COLOR_TEXT).fontSize(8.5).font('Helvetica').text('Draw ~12mA each. Can be powered directly from ESP32 3.3V rail without external capacitors. No decoupling required for typical breadboard setups.', 52, y + 26, { width: 490 });
+
+y += 72;
+
+doc.roundedRect(40, y, 515, 60, 4).fillAndStroke('#f8fafc', '#cbd5e1');
+doc.rect(40, y, 4, 60).fill('#d97706');
+doc.fillColor('#d97706').fontSize(9).font('Helvetica-Bold').text('HIGH-POWER PA+LNA MODULES (EXTERNAL ANTENNA):', 52, y + 10);
+doc.fillColor(COLOR_TEXT).fontSize(8.5).font('Helvetica').text('Draw up to ~115mA peak each. Requires 10µF to 47µF electrolytic or ceramic capacitor soldered directly across VCC and GND pins of each NRF module to prevent brownouts.', 52, y + 26, { width: 490 });
+
+y += 76;
+
+// Quick Hardware Checklist Box
+doc.roundedRect(40, y, 515, 100, 4).fillAndStroke('#eff6ff', '#bfdbfe');
+doc.fillColor('#1e40af').fontSize(9.5).font('Helvetica-Bold').text('HARDWARE ASSEMBLY CHECKLIST', 52, y + 10);
+const checklist = [
+  'Common Ground (GND): Ensure all grounds (ESP32, TFT, NRF24 #1, NRF24 #2, Buttons) are tied together.',
+  'Power Supply: Use a dedicated 5V 2A USB power supply or battery pack during dual radio transmission.',
+  'SD Card Format: FAT32 with /wordlist.txt in root directory for offline Wi-Fi password auditing.',
+  'Touchscreen Calibration: Use MCUFRIEND TouchScreen library XP=8, YP=A3, XM=A2, YM=9 (300 ohm).'
+];
+let cyCheck = y + 26;
+doc.fontSize(8).font('Helvetica');
+checklist.forEach((item, idx) => {
+  doc.fillColor(COLOR_ACCENT).text('✓', 52, cyCheck);
+  doc.fillColor(COLOR_TEXT).text(item, 66, cyCheck, { width: 475 });
+  cyCheck += 16;
+});
+
+doc.fontSize(7.5).fillColor('#64748b').text('ESP32 Security Suite Master Pinout Guide • Page 5 of 5 • Generated for CradleGuard 3.0', 40, 785, { align: 'center', width: 515 });
+
 
 doc.end();
 console.log('PDF generated successfully at:', pdfPath);

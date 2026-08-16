@@ -467,8 +467,78 @@ colors.forEach((c, i) => {
 
 // Footer
 doc.fontSize(8).fillColor(C_MUTED)
-   .text('CradleGuard 3.0 UI Design Model — ESP32 TFT Display (320×240 Landscape) — BluetoothJammer.ino',
+   .text('CradleGuard 3.0 UI Design Model — Touch Zone Reference • Page 4 of 5',
+         40, 780, { align: 'center', width: 515 });
+
+// ════════════════════════════════════════════════════════════════════════
+// PAGE 5  —  MicroSD Card UI & Dynamic Theme Architecture
+// ════════════════════════════════════════════════════════════════════════
+doc.addPage();
+y = 40;
+y = sectionTitle('MicroSD Card UI & Dynamic Theme Engine', y);
+
+// Intro card
+doc.roundedRect(40, y, 515, 68, 6).fillAndStroke('#eff6ff', '#93c5fd');
+doc.rect(40, y, 4, 68).fill(C_ACCENT);
+doc.fillColor(C_HEADER).fontSize(10).font('Helvetica-Bold').text('DYNAMIC SD-CARD DISPLAY SYSTEM (FAT32)', 52, y + 10);
+doc.fillColor(C_TEXT).fontSize(8.5).font('Helvetica')
+   .text('The firmware integrates an uncompressed 24-bit/16-bit BMP decoder, dynamic RGB565 theme parser, and timed lyrics/banner animator that reads directly from the MicroSD card slot on the 2.4" TFT shield (CS: GPIO 13, VSPI bus).', 52, y + 26, { width: 490 });
+
+y += 82;
+
+doc.fillColor(C_TEXT).fontSize(11).font('Helvetica-Bold').text('Supported SD Card Assets & Configuration Files:', 40, y);
+y += 14;
+
+y = drawTable2(
+  ['File Name', 'Format / Spec', 'UI Function / Trigger', 'Fallback Behavior'],
+  [
+    ['/splash.bmp', '320×240 24-bit BMP', 'Boot Splash Screen with progress bar', '3D Wireframe Cube Only'],
+    ['/theme.txt', 'Key=Value (RGB565)', 'Dynamic palette, titles & badge toggles', 'Cyberpunk Dark Palette'],
+    ['/lyrics.txt', '[mm:ss.xx] String', 'Live scrolling status / lyrics ticker', 'Built-in status messages'],
+    ['/menu_bg.bmp', '320×240 24-bit BMP', 'Custom background wallpaper for menus', 'Solid Navy Background'],
+    ['/wordlist.txt', 'Plaintext passphrases', 'WPA2 offline dictionary cracker', 'Internal 10-key wordlist'],
+    ['/cracked_keys.txt', 'Append Log Text', 'Auto-exports found passwords & SSIDs', 'Serial CLI Output Only'],
+  ],
+  y, [105, 120, 160, 130]
+);
+
+y += 20;
+doc.fillColor(C_TEXT).fontSize(11).font('Helvetica-Bold').text('Sample /theme.txt Configuration Format:', 40, y);
+y += 14;
+
+// Code Box
+doc.roundedRect(40, y, 515, 125, 4).fill('#0f172a');
+doc.fillColor('#38bdf8').fontSize(8).font('Courier');
+const themeSample = [
+  '# CRADLEGUARD 3.0 SD THEME CONFIGURATION',
+  'THEME_NAME=Cyberpunk Neon',
+  'COLOR_BG=0x0821          # Deep Navy Background',
+  'COLOR_HEADER=0x001F      # Header Bar Blue',
+  'COLOR_CARD=0x18E3        # Container Card Gray',
+  'COLOR_TEXT=0xFFFF        # Primary Text (White)',
+  'COLOR_ACCENT=0x07FF      # Highlight / Accent (Cyan)',
+  'COLOR_GREEN=0x07E0       # Wifi Scanner / Confirm (Green)',
+  'COLOR_RED=0xF800         # Jammer / Deauth (Red)',
+  'APP_TITLE=CRADLEGUARD 3.0',
+  'SHOW_SD_BADGE=1          # [SD:OK] Header Indicator',
+  'USE_SD_SPLASH=1          # Render /splash.bmp on boot'
+];
+
+let ty = y + 10;
+themeSample.forEach(line => {
+  if (line.startsWith('#')) doc.fillColor('#64748b');
+  else if (line.includes('=')) doc.fillColor('#facc15');
+  doc.text(line, 50, ty);
+  ty += 9.5;
+});
+
+y += 140;
+
+// Footer
+doc.fontSize(8).fillColor(C_MUTED)
+   .text('CradleGuard 3.0 UI Design Model — SD Card UI Engine • Page 5 of 5 • BluetoothJammer.ino',
          40, 780, { align: 'center', width: 515 });
 
 doc.end();
 console.log('UI Design PDF generated:', pdfPath);
+

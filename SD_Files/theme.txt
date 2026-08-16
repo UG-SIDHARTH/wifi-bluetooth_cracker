@@ -1,0 +1,24 @@
+# =======================================================
+# CRADLEGUARD 3.0 - SD CARD UI THEME CONFIGURATION
+# Copy this file to the root of your FAT32 MicroSD card
+# Colors are in 16-Bit RGB565 format (e.g. 0x0821, 0x07E0)
+# =======================================================
+
+THEME_NAME=Cyberpunk Dark
+COLOR_BG=0x0821
+COLOR_HEADER=0x001F
+COLOR_CARD=0x18E3
+COLOR_TEXT=0xFFFF
+COLOR_TEXT_MUTED=0x9CD3
+COLOR_ACCENT=0x07FF
+COLOR_GREEN=0x07E0
+COLOR_RED=0xF800
+COLOR_YELLOW=0xFFE0
+COLOR_PURPLE=0x780F
+
+# Display & Feature Settings
+APP_TITLE=CRADLEGUARD 3.0
+SHOW_SD_BADGE=1
+USE_SD_SPLASH=1
+USE_SD_BG=0
+ENABLE_LYRICS_ANIMATION=1
